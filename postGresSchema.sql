@@ -1,5 +1,12 @@
-DROP TABLE IF EXISTS questions;
-DROP TABLE IF EXISTS answers;
+DROP DATABASE IF EXISTS QandA;
+-- DROP TABLE IF EXISTS Users;
+
+CREATE DATABASE QandA;
+
+-- USE QandA;
+
+DROP TABLE IF EXISTS questions CASCADE;
+DROP TABLE IF EXISTS answers CASCADE;
 DROP TABLE IF EXISTS photos;
 
 CREATE TABLE questions (
@@ -8,9 +15,9 @@ CREATE TABLE questions (
   question_body VARCHAR(1000) NOT NULL,
   question_date DATE NOT NULL,
   question_name VARCHAR(60) NOT NULL,
-  question_email INT NOT NULL,
+  question_email VARCHAR(60) NOT NULL,
   question_helpfulness INT DEFAULT NULL,
-  question_reported BOOLEAN DEFAULT NULL,
+  question_reported SMALLINT DEFAULT NULL,
   PRIMARY KEY (question_id)
 );
 
@@ -22,7 +29,7 @@ CREATE TABLE answers (
   answer_name VARCHAR(60) NOT NULL,
   answer_email VARCHAR(60) NOT NULL,
   answer_helpfulness INT DEFAULT NULL,
-  answer_reported BOOLEAN DEFAULT NULL,
+  answer_reported SMALLINT DEFAULT NULL,
   PRIMARY KEY (answer_id),
   CONSTRAINT fk_question
     FOREIGN KEY (question_id)

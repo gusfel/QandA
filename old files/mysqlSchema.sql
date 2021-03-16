@@ -26,9 +26,9 @@ CREATE TABLE Questions (
   question_body VARCHAR(1000) NOT NULL,
   question_date DATE NOT NULL,
   question_name VARCHAR(60) NOT NULL,
-  question_email INTEGER NOT NULL,
+  question_email VARCHAR(60) NOT NULL,
   question_helpfulness SMALLINT DEFAULT NULL,
-  question_reported BOOLEAN DEFAULT NULL,
+  question_reported TINYINT DEFAULT NULL,
   PRIMARY KEY (question_id)
 );
 
@@ -46,8 +46,8 @@ CREATE TABLE answers (
   answer_date DATE NOT NULL,
   answer_name VARCHAR(60) NOT NULL,
   answer_email VARCHAR(60) NOT NULL,
-  answer_helpfulness INTEGER DEFAULT NULL,
-  answer_reported BOOLEAN DEFAULT NULL,
+  answer_helpfulness SMALLINT DEFAULT NULL,
+  answer_reported TINYINT DEFAULT NULL,
   PRIMARY KEY (answer_id),
   FOREIGN KEY (question_id) REFERENCES Questions (question_id)
     ON DELETE CASCADE
