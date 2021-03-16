@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS answers;
 DROP TABLE IF EXISTS photos;
 
 CREATE TABLE questions (
-  question_id INT NOT NULL GENERATED ALWAYS AS IDENTITY,
+  question_id SERIAL,
   product_id INT NOT NULL,
   question_body VARCHAR(1000) NOT NULL,
   question_date DATE NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE questions (
 );
 
 CREATE TABLE answers (
-  answer_id INT NOT NULL GENERATED ALWAYS AS IDENTITY,
+  answer_id SERIAL,
   question_id INT NOT NULL,
   answer_body VARCHAR(1000) NOT NULL,
   answer_date DATE NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE answers (
 );
 
 CREATE TABLE photos (
-  photo_id INT NOT NULL GENERATED ALWAYS AS IDENTITY,
+  photo_id SERIAL,
   answer_id INT NOT NULL,
   photo_url VARCHAR(250) NOT NULL DEFAULT NULL,
   PRIMARY KEY (photo_id),
