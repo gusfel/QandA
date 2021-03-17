@@ -18,7 +18,8 @@ app.get('/qa/questions', (req, res) => {
     if (err) {
       res.status(404);
     } else {
-      res.send(data);
+      // res.send(data);
+      console.log(data);
     }
   });
 });

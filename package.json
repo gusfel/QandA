@@ -19,7 +19,8 @@
   "homepage": "https://github.com/gusfel/QandA#readme",
   "dependencies": {
     "express": "^4.17.1",
-    "mongoose": "^5.12.0"
+    "mongoose": "^5.12.0",
+    "pg": "^8.5.1"
   },
   "devDependencies": {
     "eslint": "^7.22.0",
