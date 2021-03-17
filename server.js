@@ -18,7 +18,28 @@ app.get('/qa/questions', (req, res) => {
       res.status(404);
     } else {
       // res.send(data);
-      console.log(data.rows);
+      const questions = data;
+      controller.getAnswers(product_id, (aErr, aData) => {
+        if (aErr) {
+          console.log('answer server err');
+        } else {
+          const answers = aData;
+          const answersObj = {};
+          // console.log(answers);
+          answers.forEach((answer) => {
+            answersObj[answer.question_id] = {
+              [answer.id]: answer,
+            };
+          });
+          // Object.keys(questions)
+          console.log(questions);
+          questions.map(question => {
+            question.answers = answersObj[question.question_id];
+            return question;
+          });
+          console.log(questions);
+        }
+      });
     }
   });
 });
