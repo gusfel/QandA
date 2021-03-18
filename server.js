@@ -13,7 +13,6 @@ app.get('/qa/questions', (req, res) => {
     if (err) {
       res.status(404);
     } else {
-      // res.send(data)
       const questions = {};
       data.forEach((row) => {
         const newQuestion = {
@@ -41,14 +40,52 @@ app.get('/qa/questions', (req, res) => {
           questions[row.question_id].answers[row.id].photos.push(row.photo_url);
         }
       });
-      // console.log(questions);
-      // console.log(answers);
       const response = {
         product_id,
         results: [],
       };
       Object.keys(questions).forEach((key) => {
         response.results.push(questions[key]);
+      });
+      res.send(response);
+    }
+  });
+});
+
+app.get('/qa/questions/:question_id/answers', (req, res) => {
+  // console.log(req.params.question_id);
+  const { question_id } = req.params;
+  let count;
+  if (req.query.count) {
+    count = req.query.count;
+  }
+  controller.getAnswers(question_id, count, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      const answersObj = {};
+      data.forEach((answer) => {
+        const newAnswer = {
+          id: answer.id,
+          body: answer.body,
+          date: answer.date.toISOString(),
+          answerer_name: answer.answerer_name,
+          helpfulness: answer.helpfulness,
+          photos: [],
+        };
+        answersObj[answer.id] = newAnswer;
+        if (answer.photo_id) {
+          answersObj[answer.id].photos.push(answer.photo_id);
+        }
+      });
+      const response = {
+        question: question_id,
+        page: 0,
+        count,
+        results: [],
+      };
+      Object.keys(answersObj).forEach((key) => {
+        response.results.push(answersObj[key]);
       });
       res.send(response);
     }
