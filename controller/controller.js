@@ -62,3 +62,25 @@ module.exports.getQuestions = (product_id, callback) => {
     }
   });
 };
+
+module.exports.addQuestion = (questionObj, callback) => {
+  const query = `INSERT INTO questions(
+    question_body,
+    asker_name,
+    question_email,
+    product_id
+  ) VALUES (
+    ${questionObj.body},
+    ${questionObj.name},
+    ${questionObj.email},
+    ${questionObj.product_id},
+  )`;
+
+  pool.query(query, (err, response) => {
+    if (err) {
+      console.log(err);
+    } else {
+      callback(null, response);
+    }
+  });
+};

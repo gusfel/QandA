@@ -92,9 +92,20 @@ app.get('/qa/questions/:question_id/answers', (req, res) => {
   });
 });
 
-// app.put('/qa/questions/:product_id/helpful', (req, res) => {
-//   console.log(req);
-// })
+app.post('/qa/questions', (req, res) => {
+  const newQuestion = req.body;
+  console.log(newQuestion);
+// add date key/value to newQuestion
+// maybe take out all of the not nulls?
+
+  controller.addQuestion(newQuestion, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(data);
+    }
+  });
+});
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
