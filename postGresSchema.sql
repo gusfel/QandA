@@ -14,23 +14,23 @@ CREATE TABLE questions (
   product_id INT NOT NULL,
   question_body VARCHAR(1000) NOT NULL,
   question_date DATE NOT NULL,
-  question_name VARCHAR(60) NOT NULL,
+  asker_name VARCHAR(60) NOT NULL,
   question_email VARCHAR(60) NOT NULL,
   question_helpfulness INT DEFAULT NULL,
-  question_reported SMALLINT DEFAULT NULL,
+  reported SMALLINT DEFAULT NULL,
   PRIMARY KEY (question_id)
 );
 
 CREATE TABLE answers (
-  answer_id SERIAL,
+  id SERIAL,
   question_id INT NOT NULL,
-  answer_body VARCHAR(1000) NOT NULL,
-  answer_date DATE NOT NULL,
-  answer_name VARCHAR(60) NOT NULL,
+  body VARCHAR(1000) NOT NULL,
+  date DATE NOT NULL,
+  answerer_name VARCHAR(60) NOT NULL,
   answer_email VARCHAR(60) NOT NULL,
-  answer_helpfulness INT DEFAULT NULL,
+  helpfulness INT DEFAULT NULL,
   answer_reported SMALLINT DEFAULT NULL,
-  PRIMARY KEY (answer_id),
+  PRIMARY KEY (id),
   CONSTRAINT fk_question
     FOREIGN KEY (question_id)
       REFERENCES questions(question_id)
@@ -44,6 +44,6 @@ CREATE TABLE photos (
   PRIMARY KEY (photo_id),
   CONSTRAINT fk_answer
     FOREIGN KEY (answer_id)
-      REFERENCES answers (answer_id)
+      REFERENCES answers (id)
         ON DELETE CASCADE
 );

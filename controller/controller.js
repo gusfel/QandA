@@ -1,17 +1,5 @@
 const pool = require('../DB/db.js');
 
-// const { pool } = require('pg');
-
-// const pool = new pool({
-//   user: 'postgres',
-//   host: 'localhost',
-//   database: 'postgres',
-//   password: 'postgres',
-//   port: 5432,
-// });
-
-// pool.connect();
-
 module.exports.getAnswers = (product_id, callback) => {
   const query = `SELECT * FROM answers WHERE question_id in (SELECT question_id from questions WHERE product_id = ${product_id} limit 10) limit 10`;
   pool.query(query, (err, data) => {
@@ -24,17 +12,17 @@ module.exports.getAnswers = (product_id, callback) => {
   });
 };
 
-module.exports.getQuestions = (product_id, callback) => {
-  const query = `SELECT * FROM questions WHERE product_id = ${product_id} limit 10`;
-  pool.query(query, (err, qData) => {
-    if (err) {
-      console.log('sorry');
-    } else {
-      const questions = qData.rows;
-      callback(null, questions);
-    }
-  });
-};
+// module.exports.getQuestions = (product_id, callback) => {
+//   const query = `SELECT * FROM questions WHERE product_id = ${product_id} limit 10`;
+//   pool.query(query, (err, qData) => {
+//     if (err) {
+//       console.log('sorry');
+//     } else {
+//       const questions = qData.rows;
+//       callback(null, questions);
+//     }
+//   });
+// };
 
 module.exports.getPhotos = (product_id, callback) => {
   const query = `SELECT * FROM photos WHERE answer_id in (SELECT id FROM answers WHERE question_id in (SELECT question_id from questions WHERE product_id = ${product_id} limit 10) limit 10) limit 5`;
@@ -44,6 +32,27 @@ module.exports.getPhotos = (product_id, callback) => {
     } else {
       const photos = data.rows;
       callback(null, photos);
+    }
+  });
+};
+
+module.exports.getQuestions = (product_id, callback) => {
+  const query = `SELECT
+      q.*,
+      a.*,
+      p.*
+      FROM questions q
+      LEFT JOIN answers a on a.q_id = q.question_id
+      LEFT JOIN photos p on p.answer_id = a.id
+      WHERE q.product_id = ${product_id} AND q.question_id IS NOT NULL
+      LIMIT 10`;
+  pool.query(query, (err, qData) => {
+    if (err) {
+      console.log('sorry');
+    } else {
+      const questions = qData.rows;
+      // console.log(questions);
+      callback(null, questions);
     }
   });
 };
