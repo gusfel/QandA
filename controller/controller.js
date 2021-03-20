@@ -19,7 +19,7 @@ module.exports.getAnswers = (question_id, count, callback) => {
   const query = `SELECT
     *
     FROM answers
-    WHERE q_id = ${question_id}
+    WHERE q_id = ${question_id} AND answer_reported IS false
     LIMIT ${count}`;
   pool.query(query, (aErr, aData) => {
     if (aErr) {
@@ -190,25 +190,25 @@ module.exports.addAnswer = (answerObj, callback) => {
 //   a.*,
 //   p.*
 //   FROM questions q, answers a, photos p
-//   WHERE q.product_id = ${product_id} AND a.q_id = q.question_id AND p.answer_id = a.a_id`;
+//   WHERE q.product_id = ${product_id} AND a.q_id = q.question_id AND p.answer_id = a.a_id AND q.reported IS false AND a.answer_reported IS false`;
 
-// // const query = `SELECT
-// //     q.*,
-// //     a.*,
-// //     p.*
-// //     FROM questions q
-// //     LEFT JOIN answers a on a.q_id = q.question_id
-// //     LEFT JOIN photos p on p.answer_id = a.a_id
-// //     WHERE q.product_id = ${product_id}
-// //     LIMIT 10`;
-// // runQuery(query, callback);
-// pool.query(query, (err, qData) => {
-// if (err) {
-//   console.log(err);
-// } else {
-//   const questions = qData.rows;
-//   // console.log(questions);
-//   callback(null, questions);
-// }
-// });
+//   // const query = `SELECT
+//   //     q.*,
+//   //     a.*,
+//   //     p.*
+//   //     FROM questions q
+//   //     LEFT JOIN answers a on a.q_id = q.question_id
+//   //     LEFT JOIN photos p on p.answer_id = a.a_id
+//   //     WHERE q.product_id = ${product_id}
+//   //     LIMIT 10`;
+//   // runQuery(query, callback);
+//   pool.query(query, (err, qData) => {
+//     if (err) {
+//       console.log(err);
+//     } else {
+//       const questions = qData.rows;
+//       console.log(questions);
+//       callback(null, questions);
+//     }
+//   });
 // };
