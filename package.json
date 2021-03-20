@@ -18,8 +18,10 @@
   },
   "homepage": "https://github.com/gusfel/QandA#readme",
   "dependencies": {
+    "bluebird": "^3.7.2",
     "express": "^4.17.1",
     "mongoose": "^5.12.0",
+    "nodemon": "^2.0.7",
     "pg": "^8.5.1"
   },
   "devDependencies": {

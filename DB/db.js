@@ -1,6 +1,6 @@
-const { Client } = require('pg');
+const { Client, Pool } = require('pg');
 
-const client = new Client({
+const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'postgres',
@@ -8,7 +8,7 @@ const client = new Client({
   port: 5432,
 });
 
-client.connect();
+pool.connect();
 
 // client.query('SELECT * FROM questions WHERE product_id = 1 limit 5', (err, res) => {
 //   console.log(err ? err.stack : res.rows[0].message); // Hello World!
@@ -16,4 +16,4 @@ client.connect();
 //   client.end();
 // });
 
-module.exports = client;
+module.exports = pool;

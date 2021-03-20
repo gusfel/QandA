@@ -1,49 +1,57 @@
-DROP DATABASE IF EXISTS QandA;
+DROP DATABASE IF EXISTS qanda;
 -- DROP TABLE IF EXISTS Users;
 
-CREATE DATABASE QandA;
+CREATE DATABASE qanda;
 
--- USE QandA;
+USE qanda;
 
 DROP TABLE IF EXISTS questions CASCADE;
-DROP TABLE IF EXISTS answers CASCADE;
-DROP TABLE IF EXISTS photos;
+
+
 
 CREATE TABLE questions (
+  id SERIAL,
   question_id SERIAL,
   product_id INT NOT NULL,
   question_body VARCHAR(1000) NOT NULL,
   question_date DATE NOT NULL,
-  question_name VARCHAR(60) NOT NULL,
+  asker_name VARCHAR(60) NOT NULL,
   question_email VARCHAR(60) NOT NULL,
+  reported BOOLEAN DEFAULT NULL,
   question_helpfulness INT DEFAULT NULL,
-  question_reported SMALLINT DEFAULT NULL,
-  PRIMARY KEY (question_id)
+  PRIMARY KEY (id),
+  UNIQUE (question_id)
 );
+
+DROP TABLE IF EXISTS answers CASCADE;
 
 CREATE TABLE answers (
-  answer_id SERIAL,
-  question_id INT NOT NULL,
-  answer_body VARCHAR(1000) NOT NULL,
-  answer_date DATE NOT NULL,
-  answer_name VARCHAR(60) NOT NULL,
+  id SERIAL,
+  a_id SERIAL,
+  q_id INT NOT NULL,
+  body VARCHAR(1000) NOT NULL,
+  date DATE NOT NULL,
+  answerer_name VARCHAR(60) NOT NULL,
   answer_email VARCHAR(60) NOT NULL,
-  answer_helpfulness INT DEFAULT NULL,
-  answer_reported SMALLINT DEFAULT NULL,
-  PRIMARY KEY (answer_id),
-  CONSTRAINT fk_question
-    FOREIGN KEY (question_id)
+  answer_reported BOOLEAN DEFAULT NULL,
+  helpfulness INT DEFAULT NULL,
+  PRIMARY KEY (id),
+    FOREIGN KEY (q_id)
       REFERENCES questions(question_id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+  UNIQUE (a_id)
 );
 
+DROP TABLE IF EXISTS photos;
+
 CREATE TABLE photos (
+  id SERIAL,
   photo_id SERIAL,
   answer_id INT NOT NULL,
-  photo_url VARCHAR(250) NOT NULL DEFAULT NULL,
-  PRIMARY KEY (photo_id),
-  CONSTRAINT fk_answer
+  photo_url VARCHAR(250) DEFAULT NULL,
+  PRIMARY KEY (id),
     FOREIGN KEY (answer_id)
-      REFERENCES answers (answer_id)
-        ON DELETE CASCADE
+      REFERENCES answers (a_id)
+        ON DELETE CASCADE,
+  UNIQUE (photo_id)
 );
