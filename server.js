@@ -18,26 +18,26 @@ app.get('/qa/questions', (req, res) => {
         const newQuestion = {
           question_id: row.question_id,
           question_body: row.question_body,
-          question_date: row.question_date.toString(),
+          question_date: row.question_date.toISOString(),
           asker_name: row.asker_name,
           question_helpfulness: row.question_helpfulness,
           reported: row.reported,
           answers: {},
         };
         questions[row.question_id] = newQuestion;
-        if (row.id) {
+        if (row.a_id) {
           const newAnswer = {
-            id: row.id,
+            id: row.a_id,
             body: row.body,
             date: row.date.toString(),
             answerer_name: row.answerer_name,
             helpfulness: row.helpfulness,
             photos: [],
           };
-          questions[row.question_id].answers[row.id] = newAnswer;
+          questions[row.question_id].answers[row.a_id] = newAnswer;
         }
         if (row.photo_id) {
-          questions[row.question_id].answers[row.id].photos.push(row.photo_url);
+          questions[row.question_id].answers[row.a_id].photos.push(row.photo_url);
         }
       });
       const response = {
@@ -53,9 +53,8 @@ app.get('/qa/questions', (req, res) => {
 });
 
 app.get('/qa/questions/:question_id/answers', (req, res) => {
-  // console.log(req.params.question_id);
   const { question_id } = req.params;
-  let count;
+  let count = 10;
   if (req.query.count) {
     count = req.query.count;
   }
@@ -64,18 +63,18 @@ app.get('/qa/questions/:question_id/answers', (req, res) => {
       console.log(err);
     } else {
       const answersObj = {};
-      data.forEach((answer) => {
+      data.rows.forEach((answer) => {
         const newAnswer = {
-          id: answer.id,
+          id: answer.a_id,
           body: answer.body,
           date: answer.date.toISOString(),
           answerer_name: answer.answerer_name,
           helpfulness: answer.helpfulness,
           photos: [],
         };
-        answersObj[answer.id] = newAnswer;
+        answersObj[answer.a_id] = newAnswer;
         if (answer.photo_id) {
-          answersObj[answer.id].photos.push(answer.photo_id);
+          answersObj[answer.a_id].photos.push(answer.photo_id);
         }
       });
       const response = {
@@ -95,14 +94,30 @@ app.get('/qa/questions/:question_id/answers', (req, res) => {
 app.post('/qa/questions', (req, res) => {
   const newQuestion = req.body;
   console.log(newQuestion);
-// add date key/value to newQuestion
-// maybe take out all of the not nulls?
-
+  const now = new Date();
+  newQuestion.question_date = now.toISOString();
   controller.addQuestion(newQuestion, (err, data) => {
+    if (err) {
+      console.log('sewrver err');
+    } else {
+      res.send(data);
+    }
+  });
+});
+
+app.post('/qa/questions/:question_id/answers', (req, res) => {
+  const { question_id } = req.params;
+  const { body } = req;
+  const now = new Date();
+  body.question_id = Number(question_id);
+  body.date = now.toISOString();
+  // console.log(body);
+  controller.addAnswer(body, (err, data) => {
     if (err) {
       console.log(err);
     } else {
       console.log(data);
+      res.status(200);
     }
   });
 });
