@@ -13,40 +13,35 @@ app.get('/qa/questions', (req, res) => {
     if (err) {
       res.status(404);
     } else {
-      const questions = {};
-      data.forEach((row) => {
-        const newQuestion = {
-          question_id: row.question_id,
-          question_body: row.question_body,
-          question_date: row.question_date.toISOString(),
-          asker_name: row.asker_name,
-          question_helpfulness: row.question_helpfulness,
-          reported: row.reported,
-          answers: {},
-        };
-        questions[row.question_id] = newQuestion;
-        if (row.a_id) {
-          const newAnswer = {
-            id: row.a_id,
-            body: row.body,
-            date: row.date.toString(),
-            answerer_name: row.answerer_name,
-            helpfulness: row.helpfulness,
-            photos: [],
-          };
-          questions[row.question_id].answers[row.a_id] = newAnswer;
-        }
-        if (row.photo_id) {
-          questions[row.question_id].answers[row.a_id].photos.push(row.photo_url);
-        }
+      // const questions = {};
+      // res.send(data);
+      // console.log(data);
+      const compiled = {};
+      const { questions, answers, photos } = data;
+      questions.forEach((question) => {
+        const formattedQ = question;
+        formattedQ.answers = {};
+        compiled[question.question_id] = formattedQ;
+      });
+      // console.log(answers)
+      answers.forEach((answer) => {
+        const answerObj = answer;
+        answerObj.photos = [];
+        compiled[answer.q_id].answers[answer.a_id] = answerObj;
+        photos.forEach((photo) => {
+          if (photo.answer_id === answer.a_id) {
+            answerObj.photos.push(photo.photo_url);
+          }
+        });
       });
       const response = {
         product_id,
         results: [],
       };
-      Object.keys(questions).forEach((key) => {
-        response.results.push(questions[key]);
+      Object.keys(compiled).forEach((key) => {
+        response.results.push(compiled[key]);
       });
+
       res.send(response);
     }
   });
@@ -72,9 +67,11 @@ app.get('/qa/questions/:question_id/answers', (req, res) => {
           helpfulness: answer.helpfulness,
           photos: [],
         };
-        answersObj[answer.a_id] = newAnswer;
+        if (!answersObj[answer.a_id]) {
+          answersObj[answer.a_id] = newAnswer;
+        }
         if (answer.photo_id) {
-          answersObj[answer.a_id].photos.push(answer.photo_id);
+          answersObj[answer.a_id].photos.push(answer.photo_url);
         }
       });
       const response = {
@@ -125,6 +122,43 @@ app.post('/qa/questions/:question_id/answers', (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
+
+// data.forEach((row) => {
+//   const newQuestion = {
+//     question_id: row.question_id,
+//     question_body: row.question_body,
+//     question_date: row.question_date.toISOString(),
+//     asker_name: row.asker_name,
+//     question_helpfulness: row.question_helpfulness,
+//     reported: row.reported,
+//     answers: {},
+//   };
+//   if (!questions[row.question_id]) {
+//     questions[row.question_id] = newQuestion;
+//   }
+//   if (row.a_id) {
+//     const newAnswer = {
+//       id: row.a_id,
+//       body: row.body,
+//       date: row.date.toString(),
+//       answerer_name: row.answerer_name,
+//       helpfulness: row.helpfulness,
+//       photos: [],
+//     };
+//     questions[row.question_id].answers[row.a_id] = newAnswer;
+//   }
+//   if (row.photo_id) {
+//     questions[row.question_id].answers[row.a_id].photos.push(row.photo_url);
+//   }
+// });
+// const response = {
+//   product_id,
+//   results: [],
+// };
+// Object.keys(questions).forEach((key) => {
+//   response.results.push(questions[key]);
+// });
+// res.send(response);
 
 // app.get('/qa/questions', (req, res) => {
 //   const { product_id } = req.query;
