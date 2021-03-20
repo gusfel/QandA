@@ -11,27 +11,41 @@ const runQuery = (query, callback) => {
 };
 
 module.exports.getAnswers = (question_id, count, callback) => {
-  const query = `SELECT
-  a.*,
-  p.* FROM answers a, photos p
-  WHERE a.q_id = ${question_id} AND p.answer_id = a.a_id
-  limit ${count}`;
   // const query = `SELECT
-  //   a.*,
-  //   p.* FROM answers a
-  //   LEFT JOIN photos p on p.answer_id = a.a_id
-  //   WHERE a.q_id = ${question_id}
-  //   limit ${count}`;
-  runQuery(query, callback);
-  // pool.query(query, (err, data) => {
-  //   if (err) {
-  //     console.log('sorry answers');
-  //   } else {
-  //     const answers = data.rows;
-  //     // console.log(answers);
-  //     callback(null, answers);
-  //   }
-  // });
+  // a.*,
+  // p.* FROM answers a, photos p
+  // WHERE a.q_id = ${question_id} AND p.answer_id = a.a_id
+  // limit ${count}`;
+  const query = `SELECT
+    *
+    FROM answers
+    WHERE q_id = ${question_id}
+    LIMIT ${count}`;
+  pool.query(query, (aErr, aData) => {
+    if (aErr) {
+      console.log(aErr);
+    } else {
+      const answers = aData.rows;
+      const answerIds = answers.map((answer) => answer.a_id);
+      const pQuery = `SELECT
+      answer_id,
+      photo_url
+        FROM photos
+        WHERE answer_id = ANY(Array[${answerIds}])`;
+      pool.query(pQuery, (pErr, pData) => {
+        if (pErr) {
+          console.log(pErr);
+        } else {
+          const photos = pData.rows;
+          const sendObj = {
+            photos,
+            answers,
+          };
+          callback(null, sendObj);
+        }
+      });
+    }
+  });
 };
 
 module.exports.getQuestions = (product_id, callback) => {

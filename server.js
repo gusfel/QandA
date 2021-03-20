@@ -13,9 +13,6 @@ app.get('/qa/questions', (req, res) => {
     if (err) {
       res.status(404);
     } else {
-      // const questions = {};
-      // res.send(data);
-      // console.log(data);
       const compiled = {};
       const { questions, answers, photos } = data;
       questions.forEach((question) => {
@@ -23,16 +20,15 @@ app.get('/qa/questions', (req, res) => {
         formattedQ.answers = {};
         compiled[question.question_id] = formattedQ;
       });
-      // console.log(answers)
       answers.forEach((answer) => {
         const answerObj = answer;
         answerObj.photos = [];
-        compiled[answer.q_id].answers[answer.a_id] = answerObj;
         photos.forEach((photo) => {
           if (photo.answer_id === answer.a_id) {
             answerObj.photos.push(photo.photo_url);
           }
         });
+        compiled[answer.q_id].answers[answer.a_id] = answerObj;
       });
       const response = {
         product_id,
@@ -58,21 +54,17 @@ app.get('/qa/questions/:question_id/answers', (req, res) => {
       console.log(err);
     } else {
       const answersObj = {};
-      data.rows.forEach((answer) => {
-        const newAnswer = {
-          id: answer.a_id,
-          body: answer.body,
-          date: answer.date.toISOString(),
-          answerer_name: answer.answerer_name,
-          helpfulness: answer.helpfulness,
-          photos: [],
-        };
-        if (!answersObj[answer.a_id]) {
-          answersObj[answer.a_id] = newAnswer;
-        }
-        if (answer.photo_id) {
-          answersObj[answer.a_id].photos.push(answer.photo_url);
-        }
+      const { answers, photos } = data;
+      answers.forEach((answer) => {
+        const answerObj = answer;
+        answerObj.photos = [];
+
+        photos.forEach((photo) => {
+          if (photo.answer_id === answer.a_id) {
+            answerObj.photos.push(photo.photo_url);
+          }
+        });
+        answersObj[answer.a_id] = answerObj;
       });
       const response = {
         question: question_id,
@@ -95,9 +87,9 @@ app.post('/qa/questions', (req, res) => {
   newQuestion.question_date = now.toISOString();
   controller.addQuestion(newQuestion, (err, data) => {
     if (err) {
-      console.log('sewrver err');
+      console.log('server err');
     } else {
-      res.send(data);
+      res.status(201).send('CREATED');
     }
   });
 });
@@ -210,4 +202,22 @@ app.listen(port, () => {
 //       });
 //     }
 //   });
+// });
+
+// old answers
+// data.rows.forEach((answer) => {
+//   const newAnswer = {
+//     id: answer.a_id,
+//     body: answer.body,
+//     date: answer.date.toISOString(),
+//     answerer_name: answer.answerer_name,
+//     helpfulness: answer.helpfulness,
+//     photos: [],
+//   };
+//   if (!answersObj[answer.a_id]) {
+//     answersObj[answer.a_id] = newAnswer;
+//   }
+//   if (answer.photo_id) {
+//     answersObj[answer.a_id].photos.push(answer.photo_url);
+//   }
 // });
