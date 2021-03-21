@@ -1,7 +1,7 @@
-const pool = require('../DB/db.js');
+const client = require('../DB/db.js');
 
 const runQuery = (query, callback) => {
-  pool.query(query, (err, response) => {
+  client.query(query, (err, response) => {
     if (err) {
       console.log(err);
     } else {
@@ -10,6 +10,16 @@ const runQuery = (query, callback) => {
   });
 };
 
+// id SERIAL,
+//   a_id SERIAL,
+//   q_id INT NOT NULL,
+//   body VARCHAR(1000) NOT NULL,
+//   date DATE NOT NULL,
+//   answerer_name VARCHAR(60) NOT NULL,
+//   answer_email VARCHAR(60) NOT NULL,
+//   answer_reported BOOLEAN DEFAULT NULL,
+//   helpfulness INT DEFAULT NULL
+
 module.exports.getAnswers = (question_id, count, callback) => {
   // const query = `SELECT
   // a.*,
@@ -17,11 +27,14 @@ module.exports.getAnswers = (question_id, count, callback) => {
   // WHERE a.q_id = ${question_id} AND p.answer_id = a.a_id
   // limit ${count}`;
   const query = `SELECT
-    *
+    a_id,
+    body,
+    answerer_name,
+    helpfulness
     FROM answers
     WHERE q_id = ${question_id} AND answer_reported IS false
     LIMIT ${count}`;
-  pool.query(query, (aErr, aData) => {
+  client.query(query, (aErr, aData) => {
     if (aErr) {
       console.log(aErr);
     } else {
@@ -32,7 +45,7 @@ module.exports.getAnswers = (question_id, count, callback) => {
       photo_url
         FROM photos
         WHERE answer_id = ANY(Array[${answerIds}])`;
-      pool.query(pQuery, (pErr, pData) => {
+      client.query(pQuery, (pErr, pData) => {
         if (pErr) {
           console.log(pErr);
         } else {
@@ -50,16 +63,16 @@ module.exports.getAnswers = (question_id, count, callback) => {
 
 module.exports.getQuestions = (product_id, callback) => {
   const query = `SELECT
-    question_id,
-    question_body,
-    question_date,
-    asker_name,
-    reported,
-    question_helpfulness
-      FROM questions
+  question_id,
+  question_body,
+  question_date,
+  asker_name,
+  reported,
+  question_helpfulness
+    FROM questions
       WHERE product_id = ${product_id} AND reported IS false
       `;
-  pool.query(query, (err, qData) => {
+  client.query(query, (err, qData) => {
     if (err) {
       console.log(err);
     } else {
@@ -74,7 +87,7 @@ module.exports.getQuestions = (product_id, callback) => {
         helpfulness
           FROM answers
           WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
-      pool.query(aQuery, (aErr, aData) => {
+      client.query(aQuery, (aErr, aData) => {
         if (aErr) {
           console.log(aErr);
         } else {
@@ -85,7 +98,7 @@ module.exports.getQuestions = (product_id, callback) => {
             photo_url
               FROM photos
               WHERE answer_id = ANY(Array[${answerIds}])`;
-          pool.query(pQuery, (pErr, pData) => {
+          client.query(pQuery, (pErr, pData) => {
             if (pErr) {
               console.log(pErr);
             } else {
@@ -123,7 +136,7 @@ module.exports.addQuestion = (questionObj, callback) => {
     ${false}
   );`;
   runQuery(query, callback);
-  // pool.query(query, (err, response) => {
+  // client.query(query, (err, response) => {
   //   if (err) {
   //     console.log(err);
   //   } else {
@@ -152,7 +165,7 @@ module.exports.addAnswer = (answerObj, callback) => {
     ${false}
   )
   RETURNING a_id;`;
-  pool.query(query, (err, response) => {
+  client.query(query, (err, response) => {
     if (err) {
       console.log(err);
     } else {
@@ -170,7 +183,7 @@ module.exports.addAnswer = (answerObj, callback) => {
         });
 
         runQuery(addPhotoQuery, callback);
-        // pool.query(addPhotoQuery, (pErr, pResponse) => {
+        // client.query(addPhotoQuery, (pErr, pResponse) => {
         //   if (pErr) {
         //     console.log(pErr);
         //   } else {
@@ -184,25 +197,77 @@ module.exports.addAnswer = (answerObj, callback) => {
   });
 };
 
-// module.exports.getQuestions = (product_id, callback) => {
-//   const query = `SELECT
-//   q.*,
-//   a.*,
-//   p.*
-//   FROM questions q, answers a, photos p
-//   WHERE q.product_id = ${product_id} AND a.q_id = q.question_id AND p.answer_id = a.a_id AND q.reported IS false AND a.answer_reported IS false`;
+module.exports.helpfulQuest = (question_id, callback) => {
+  const query = `UPDATE questions
+    SET question_helpfulness = question_helpfulness + 1
+    WHERE question_id = ${question_id}`;
+  client.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      callback(null, data);
+    }
+  });
+};
 
+module.exports.reportQuest = (question_id, callback) => {
+  const query = `UPDATE questions
+    SET reported = ${true}
+    WHERE question_id = ${question_id}`;
+  client.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      callback(null, data);
+    }
+  });
+};
+
+module.exports.helpfulAns = (answer_id, callback) => {
+  const query = `UPDATE answers
+    SET helpfulness = helpfulness + 1
+    WHERE a_id = ${answer_id}`;
+  client.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      callback(null, data);
+    }
+  });
+};
+
+module.exports.reportAns = (answer_id, callback) => {
+  const query = `UPDATE answers
+    SET answer_reported = ${true}
+    WHERE a_id = ${answer_id}`;
+  client.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      callback(null, data);
+    }
+  });
+};
+
+// module.exports.getQuestions = (product_id, callback) => {
 //   // const query = `SELECT
-//   //     q.*,
-//   //     a.*,
-//   //     p.*
-//   //     FROM questions q
-//   //     LEFT JOIN answers a on a.q_id = q.question_id
-//   //     LEFT JOIN photos p on p.answer_id = a.a_id
-//   //     WHERE q.product_id = ${product_id}
+//   // q.*,
+//   // a.*,
+//   // p.*
+//   // FROM questions q, answers a, photos p
+//   // WHERE q.product_id = ${product_id} AND a.q_id = q.question_id AND p.answer_id = a.a_id AND q.reported IS false AND a.answer_reported IS false`;
+
+//   const query = `SELECT
+//       q.*,
+//       a.*,
+//       p.*
+//       FROM questions q
+//       LEFT JOIN answers a on a.q_id = q.question_id
+//       LEFT JOIN photos p on p.answer_id = a.a_id
+//       WHERE q.product_id = ${product_id}`;
 //   //     LIMIT 10`;
 //   // runQuery(query, callback);
-//   pool.query(query, (err, qData) => {
+//   client.query(query, (err, qData) => {
 //     if (err) {
 //       console.log(err);
 //     } else {

@@ -13,47 +13,6 @@ app.get('/qa/questions', (req, res) => {
     if (err) {
       res.status(404);
     } else {
-      // with aliasing
-      // const questions = {};
-      // data.forEach((row) => {
-      //   const newQuestion = {
-      //     question_id: row.question_id,
-      //     question_body: row.question_body,
-      //     question_date: row.question_date.toISOString(),
-      //     asker_name: row.asker_name,
-      //     question_helpfulness: row.question_helpfulness,
-      //     reported: row.reported,
-      //     answers: {},
-      //   };
-      //   if (!questions[row.question_id]) {
-      //     questions[row.question_id] = newQuestion;
-      //   }
-      //   if (row.a_id) {
-      //     const newAnswer = {
-      //       id: row.a_id,
-      //       body: row.body,
-      //       date: row.date.toString(),
-      //       answerer_name: row.answerer_name,
-      //       helpfulness: row.helpfulness,
-      //       photos: [],
-      //     };
-      //     if (!questions[row.question_id].answers[row.a_id]) {
-      //       questions[row.question_id].answers[row.a_id] = newAnswer;
-      //     }
-      //   }
-      //   // if (row.photo_id) {
-      //   //   questions[row.question_id].answers[row.a_id].photos.push(row.photo_url);
-      //   // }
-      // });
-      // const response = {
-      //   product_id,
-      //   results: [],
-      // };
-      // Object.keys(questions).forEach((key) => {
-      //   response.results.push(questions[key]);
-      // });
-      // res.send(response);
-
       // with 3 queries
       const compiled = {};
       const { questions, answers, photos } = data;
@@ -79,8 +38,7 @@ app.get('/qa/questions', (req, res) => {
       Object.keys(compiled).forEach((key) => {
         response.results.push(compiled[key]);
       });
-
-      res.send(response);
+      res.status(200).send(response);
     }
   });
 });
@@ -117,14 +75,13 @@ app.get('/qa/questions/:question_id/answers', (req, res) => {
       Object.keys(answersObj).forEach((key) => {
         response.results.push(answersObj[key]);
       });
-      res.send(response);
+      res.status(200).send(response);
     }
   });
 });
 
 app.post('/qa/questions', (req, res) => {
   const newQuestion = req.body;
-  console.log(newQuestion);
   const now = new Date();
   newQuestion.question_date = now.toISOString();
   controller.addQuestion(newQuestion, (err, data) => {
@@ -142,13 +99,55 @@ app.post('/qa/questions/:question_id/answers', (req, res) => {
   const now = new Date();
   body.question_id = Number(question_id);
   body.date = now.toISOString();
-  // console.log(body);
   controller.addAnswer(body, (err, data) => {
     if (err) {
       console.log(err);
     } else {
-      console.log(data);
-      res.status(200);
+      res.status(201).send('CREATED');
+    }
+  });
+});
+
+app.put('/qa/questions/:question_id/helpful', (req, res) => {
+  const { question_id } = req.params;
+  controller.helpfulQuest(question_id, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.status(204).send('NO CONTENT');
+    }
+  });
+});
+
+app.put('/qa/questions/:question_id/report', (req, res) => {
+  const { question_id } = req.params;
+  controller.reportQuest(question_id, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.status(204).send('NO CONTENT');
+    }
+  });
+});
+
+app.put('/qa/answers/:answer_id/helpful', (req, res) => {
+  const { answer_id } = req.params;
+  controller.helpfulAns(answer_id, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.status(204).send('NO CONTENT');
+    }
+  });
+});
+
+app.put('/qa/answers/:answer_id/report', (req, res) => {
+  const { answer_id } = req.params;
+  controller.reportAns(answer_id, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.status(204).send('NO CONTENT');
     }
   });
 });
@@ -157,6 +156,9 @@ app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
 
+// get questions with 3 queries
+// with aliasing
+// const questions = {};
 // data.forEach((row) => {
 //   const newQuestion = {
 //     question_id: row.question_id,
@@ -179,7 +181,9 @@ app.listen(port, () => {
 //       helpfulness: row.helpfulness,
 //       photos: [],
 //     };
-//     questions[row.question_id].answers[row.a_id] = newAnswer;
+//     if (!questions[row.question_id].answers[row.a_id]) {
+//       questions[row.question_id].answers[row.a_id] = newAnswer;
+//     }
 //   }
 //   if (row.photo_id) {
 //     questions[row.question_id].answers[row.a_id].photos.push(row.photo_url);
@@ -193,73 +197,3 @@ app.listen(port, () => {
 //   response.results.push(questions[key]);
 // });
 // res.send(response);
-
-// app.get('/qa/questions', (req, res) => {
-//   const { product_id } = req.query;
-//   controller.getQuestions(product_id, (err, data) => {
-//     if (err) {
-//       res.status(404);
-//     } else {
-//       controller.getPhotos(product_id, (pErr, pData) => {
-//         if (pErr) {
-//           console.log('photo server error');
-//         } else {
-//           const photoObj = {};
-//           pData.forEach((photo) => {
-//             if (photoObj[photo.answer_id]) {
-//               photoObj[photo.answer_id].push(photo.photo_url);
-//             } else {
-//               photoObj[photo.answer_id] = [photo.photo_url];
-//             }
-//           });
-//           const questions = data;
-//           controller.getAnswers(product_id, (aErr, aData) => {
-//             if (aErr) {
-//               console.log('answer server err');
-//             } else {
-//               const answers = aData;
-//               const answersObj = {};
-//               answers.forEach((answer) => {
-//                 if (photoObj[answer.id]) {
-//                   answer.photos = photoObj[answer.id];
-//                 } else {
-//                   answer.photos = [];
-//                 }
-//                 answersObj[answer.question_id] = {
-//                   [answer.id]: answer,
-//                 };
-//               });
-//               questions.map((question) => {
-//                 question.answers = answersObj[question.question_id];
-//                 return question;
-//               });
-//               const sendObj = {
-//                 product_id,
-//                 results: questions,
-//               };
-//               res.send(sendObj);
-//             }
-//           });
-//         }
-//       });
-//     }
-//   });
-// });
-
-// old answers
-// data.rows.forEach((answer) => {
-//   const newAnswer = {
-//     id: answer.a_id,
-//     body: answer.body,
-//     date: answer.date.toISOString(),
-//     answerer_name: answer.answerer_name,
-//     helpfulness: answer.helpfulness,
-//     photos: [],
-//   };
-//   if (!answersObj[answer.a_id]) {
-//     answersObj[answer.a_id] = newAnswer;
-//   }
-//   if (answer.photo_id) {
-//     answersObj[answer.a_id].photos.push(answer.photo_url);
-//   }
-// });
