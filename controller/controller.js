@@ -1,4 +1,6 @@
+/* eslint-disable camelcase */
 const client = require('../DB/db.js');
+const model = require('../models/models.js')
 
 const runQuery = (query, callback) => {
   client.query(query, (err, response) => {
@@ -10,22 +12,7 @@ const runQuery = (query, callback) => {
   });
 };
 
-// id SERIAL,
-//   a_id SERIAL,
-//   q_id INT NOT NULL,
-//   body VARCHAR(1000) NOT NULL,
-//   date DATE NOT NULL,
-//   answerer_name VARCHAR(60) NOT NULL,
-//   answer_email VARCHAR(60) NOT NULL,
-//   answer_reported BOOLEAN DEFAULT NULL,
-//   helpfulness INT DEFAULT NULL
-
 module.exports.getAnswers = (question_id, count, callback) => {
-  // const query = `SELECT
-  // a.*,
-  // p.* FROM answers a, photos p
-  // WHERE a.q_id = ${question_id} AND p.answer_id = a.a_id
-  // limit ${count}`;
   const query = `SELECT
     a_id,
     body,
@@ -70,8 +57,7 @@ module.exports.getQuestions = (product_id, callback) => {
   reported,
   question_helpfulness
     FROM questions
-      WHERE product_id = ${product_id} AND reported IS false
-      `;
+    WHERE product_id = ${product_id} AND reported IS false`;
   client.query(query, (err, qData) => {
     if (err) {
       console.log(err);
@@ -126,27 +112,19 @@ module.exports.addQuestion = (questionObj, callback) => {
     question_date,
     question_helpfulness,
     reported
-  ) VALUES (
-    '${questionObj.body}',
-    '${questionObj.name}',
-    '${questionObj.email}',
-    ${questionObj.product_id},
-    '${questionObj.question_date}',
-    0,
-    ${false}
-  );`;
+    ) VALUES (
+      '${questionObj.body}',
+      '${questionObj.name}',
+      '${questionObj.email}',
+      ${questionObj.product_id},
+      '${questionObj.question_date}',
+      0,
+      ${false}
+    );`;
   runQuery(query, callback);
-  // client.query(query, (err, response) => {
-  //   if (err) {
-  //     console.log(err);
-  //   } else {
-  //     callback(null, response);
-  //   }
-  // });
 };
 
 module.exports.addAnswer = (answerObj, callback) => {
-  console.log(answerObj);
   const query = `INSERT INTO answers (
     q_id,
     body,
@@ -155,16 +133,16 @@ module.exports.addAnswer = (answerObj, callback) => {
     answer_email,
     helpfulness,
     answer_reported
-  ) VALUES (
-    ${answerObj.question_id},
-    '${answerObj.body}',
-    '${answerObj.date}',
-    '${answerObj.name}',
-    '${answerObj.email}',
-    0,
-    ${false}
-  )
-  RETURNING a_id;`;
+    ) VALUES (
+      ${answerObj.question_id},
+      '${answerObj.body}',
+      '${answerObj.date}',
+      '${answerObj.name}',
+      '${answerObj.email}',
+      0,
+      ${false}
+    )
+    RETURNING a_id;`;
   client.query(query, (err, response) => {
     if (err) {
       console.log(err);
@@ -174,22 +152,16 @@ module.exports.addAnswer = (answerObj, callback) => {
       if (answerObj.photos.length) {
         answerObj.photos.forEach((photo) => {
           const photoQuery = `INSERT INTO photos (
-            answer_id, photo_url
+            answer_id,
+            photo_url
             ) VALUES (
               ${newAnswerId},
               '${photo}'
-          );`;
+            );`;
           addPhotoQuery += photoQuery;
         });
 
         runQuery(addPhotoQuery, callback);
-        // client.query(addPhotoQuery, (pErr, pResponse) => {
-        //   if (pErr) {
-        //     console.log(pErr);
-        //   } else {
-        //     callback(null, pResponse);
-        //   }
-        // });
       } else {
         callback(null, response);
       }
@@ -201,52 +173,28 @@ module.exports.helpfulQuest = (question_id, callback) => {
   const query = `UPDATE questions
     SET question_helpfulness = question_helpfulness + 1
     WHERE question_id = ${question_id}`;
-  client.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-    } else {
-      callback(null, data);
-    }
-  });
+  runQuery(query, callback);
 };
 
 module.exports.reportQuest = (question_id, callback) => {
   const query = `UPDATE questions
     SET reported = ${true}
     WHERE question_id = ${question_id}`;
-  client.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-    } else {
-      callback(null, data);
-    }
-  });
+  runQuery(query, callback);
 };
 
 module.exports.helpfulAns = (answer_id, callback) => {
   const query = `UPDATE answers
     SET helpfulness = helpfulness + 1
     WHERE a_id = ${answer_id}`;
-  client.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-    } else {
-      callback(null, data);
-    }
-  });
+  runQuery(query, callback);
 };
 
 module.exports.reportAns = (answer_id, callback) => {
   const query = `UPDATE answers
     SET answer_reported = ${true}
     WHERE a_id = ${answer_id}`;
-  client.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-    } else {
-      callback(null, data);
-    }
-  });
+  runQuery(query, callback);
 };
 
 // module.exports.getQuestions = (product_id, callback) => {

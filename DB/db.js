@@ -1,4 +1,4 @@
-const { Client, pool } = require('pg');
+const { Client, Pool } = require('pg');
 
 const client = new Client({
   user: 'postgres',
