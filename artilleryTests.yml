@@ -1,0 +1,19 @@
+config:
+  target: "http://localhost:2000"
+  http:
+    pool: 1000
+  phases:
+    - duration: 300
+      arrivalRate: 1000
+  payload:
+    path: "productIds.csv"
+    fields:
+        - "products"
+scenarios:
+  - name: "get questions"
+    flow:
+      - get:
+        # url: "/qa/questions/?product_id=825875"
+          url: "/qa/questions/?product_id={{ products }}"
+          # qs:
+          #   product_id: "825875"
