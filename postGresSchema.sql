@@ -17,8 +17,8 @@ CREATE TABLE questions (
   question_date DATE NOT NULL,
   asker_name VARCHAR(60) NOT NULL,
   question_email VARCHAR(60) NOT NULL,
-  reported BOOLEAN DEFAULT NULL,
-  question_helpfulness INT DEFAULT NULL,
+  reported BOOLEAN DEFAULT FALSE,
+  question_helpfulness INT DEFAULT 0,
   PRIMARY KEY (id),
   UNIQUE (question_id)
 );
@@ -33,8 +33,8 @@ CREATE TABLE answers (
   date DATE NOT NULL,
   answerer_name VARCHAR(60) NOT NULL,
   answer_email VARCHAR(60) NOT NULL,
-  answer_reported BOOLEAN DEFAULT NULL,
-  helpfulness INT DEFAULT NULL,
+  answer_reported BOOLEAN DEFAULT FALSE,
+  helpfulness INT DEFAULT 0,
   PRIMARY KEY (id),
     FOREIGN KEY (q_id)
       REFERENCES questions(question_id)
