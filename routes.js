@@ -10,32 +10,73 @@ router.get('/qa/questions', (req, res) => {
     if (err) {
       res.status(404);
     } else {
-      // with 3 queries
-      const compiled = {};
-      const { questions, answers, photos } = data;
-      questions.forEach((question) => {
-        const formattedQ = question;
-        formattedQ.answers = {};
-        compiled[question.question_id] = formattedQ;
-      });
-      answers.forEach((answer) => {
-        const answerObj = answer;
-        answerObj.photos = [];
-        photos.forEach((photo) => {
-          if (photo.answer_id === answer.a_id) {
-            answerObj.photos.push(photo.photo_url);
+    // joins
+      const questions = {};
+      data.forEach((row) => {
+        const newQuestion = {
+          question_id: row.question_id,
+          question_body: row.question_body,
+          question_date: row.question_date.toISOString(),
+          asker_name: row.asker_name,
+          question_helpfulness: row.question_helpfulness,
+          reported: row.reported,
+          answers: {},
+        };
+        if (!questions[row.question_id]) {
+          questions[row.question_id] = newQuestion;
+        }
+        if (row.a_id) {
+          const newAnswer = {
+            id: row.a_id,
+            body: row.body,
+            date: row.date.toString(),
+            answerer_name: row.answerer_name,
+            helpfulness: row.helpfulness,
+            photos: [],
+          };
+          if (!questions[row.question_id].answers[row.a_id]) {
+            questions[row.question_id].answers[row.a_id] = newAnswer;
           }
-        });
-        compiled[answer.q_id].answers[answer.a_id] = answerObj;
+        }
+        if (row.photo_id) {
+          questions[row.question_id].answers[row.a_id].photos.push(row.photo_url);
+        }
       });
       const response = {
         product_id,
         results: [],
       };
-      Object.keys(compiled).forEach((key) => {
-        response.results.push(compiled[key]);
+      Object.keys(questions).forEach((key) => {
+        response.results.push(questions[key]);
       });
-      res.status(200).send(response);
+      res.send(response);
+
+      // with 3 queries
+      // const compiled = {};
+      // const { questions, answers, photos } = data;
+      // questions.forEach((question) => {
+      //   const formattedQ = question;
+      //   formattedQ.answers = {};
+      //   compiled[question.question_id] = formattedQ;
+      // });
+      // answers.forEach((answer) => {
+      //   const answerObj = answer;
+      //   answerObj.photos = [];
+      //   photos.forEach((photo) => {
+      //     if (photo.answer_id === answer.a_id) {
+      //       answerObj.photos.push(photo.photo_url);
+      //     }
+      //   });
+      //   compiled[answer.q_id].answers[answer.a_id] = answerObj;
+      // });
+      // const response = {
+      //   product_id,
+      //   results: [],
+      // };
+      // Object.keys(compiled).forEach((key) => {
+      //   response.results.push(compiled[key]);
+      // });
+      // res.status(200).send(response);
     }
   });
 });
@@ -78,7 +119,6 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
 });
 
 router.post('/qa/questions', (req, res) => {
-
   const newQuestion = req.body;
   const now = new Date();
   newQuestion.question_date = now.toISOString();

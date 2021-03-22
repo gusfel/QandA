@@ -3,11 +3,18 @@ const db = require('../DB/db.js');
 const model = require('../models/models.js');
 
 const runQuery = (query, callback) => {
-  client.query(query, (err, response) => {
+  db.connect((err, client, done) => {
     if (err) {
       callback(err);
     } else {
-      callback(null, response);
+      client.query(query, (err2, response) => {
+        done();
+        if (err2) {
+          callback(err2);
+        } else {
+          callback(null, response);
+        }
+      });
     }
   });
 };
@@ -55,67 +62,98 @@ module.exports = {
       }
     });
   },
+
   getQuestions: (product_id, callback) => {
+    // const query = `SELECT
+    // q.*
+    // FROM questions q
+    // WHERE q.product_id = ${product_id}`;
     const query = `SELECT
-    question_id,
-    question_body,
-    question_date,
-    asker_name,
-    reported,
-    question_helpfulness
-      FROM questions
-      WHERE product_id = ${product_id} AND reported IS false`;
+    q.*,
+    a.*,
+    p.*
+    FROM questions q
+    LEFT JOIN answers a on a.q_id = q.question_id
+    LEFT JOIN photos p on p.answer_id = a.a_id
+    WHERE q.product_id = ${product_id} AND q.reported IS false AND a.answer_reported IS false
+    `;
     db.connect((err, client, done) => {
       if (err) {
         callback(err);
       } else {
-        client.query(query, (qErr, qData) => {
-          if (qErr) {
-            callback(qErr);
+        client.query(query, (terr, data) => {
+          done();
+          if (terr) {
+            callback(terr);
           } else {
-            const questions = qData.rows;
-            const questionIds = questions.map((question) => question.question_id);
-            const aQuery = `SELECT
-              a_id,
-              q_id,
-              body,
-              date,
-              answerer_name,
-              helpfulness
-                FROM answers
-                WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
-            client.query(aQuery, (aErr, aData) => {
-              if (aErr) {
-                callback(aErr);
-              } else {
-                const answers = aData.rows;
-                const answerIds = answers.map((answer) => answer.a_id);
-                const pQuery = `SELECT
-                      answer_id,
-                      photo_url
-                        FROM photos
-                        WHERE answer_id = ANY(Array[${answerIds}])`;
-                client.query(pQuery, (pErr, pData) => {
-                  done();
-                  if (pErr) {
-                    callback(pErr);
-                  } else {
-                    const photos = pData.rows;
-                    const sendObj = {
-                      photos,
-                      questions,
-                      answers,
-                    };
-                    callback(null, sendObj);
-                  }
-                });
-              }
-            });
+            callback(null, data.rows);
           }
         });
       }
     });
   },
+  // getQuestions: (product_id, callback) => {
+  //   const query = `SELECT
+  //   question_id,
+  //   question_body,
+  //   question_date,
+  //   asker_name,
+  //   reported,
+  //   question_helpfulness
+  //     FROM questions
+  //     WHERE product_id = ${product_id} AND reported IS false`;
+  //   db.connect((err, client, done) => {
+  //     if (err) {
+  //       callback(err);
+  //     } else {
+  //       client.query(query, (qErr, qData) => {
+  //         if (qErr) {
+  //           callback(qErr);
+  //         } else {
+  //           const questions = qData.rows;
+  //           const questionIds = questions.map((question) => question.question_id);
+  //           const aQuery = `SELECT
+  //             a_id,
+  //             q_id,
+  //             body,
+  //             date,
+  //             answerer_name,
+  //             helpfulness
+  //               FROM answers
+  //               WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
+  //           client.query(aQuery, (aErr, aData) => {
+  //             if (aErr) {
+  //               callback(aErr);
+  //             } else {
+  //               const answers = aData.rows;
+  //               const answerIds = answers.map((answer) => answer.a_id);
+  //               const pQuery = `SELECT
+  //                     answer_id,
+  //                     photo_url
+  //                       FROM photos
+  //                       WHERE answer_id = ANY(Array[${answerIds}])`;
+  //               client.query(pQuery, (pErr, pData) => {
+  //                 done();
+  //                 if (pErr) {
+  //                   callback(pErr);
+  //                 } else {
+  //                   const photos = pData.rows;
+  //                   const sendObj = {
+  //                     photos,
+  //                     questions,
+  //                     answers,
+  //                   };
+  //                   callback(null, sendObj);
+  //                 }
+  //               });
+  //             }
+  //           });
+  //         }
+  //       });
+  //     }
+  //   });
+  // },
+
   addQuestion: (questionObj, callback) => {
     const query = `INSERT INTO questions(
       question_body,
@@ -147,28 +185,35 @@ module.exports = {
         '${answerObj.email}'
       )
       RETURNING a_id;`;
-    client.query(query, (err, response) => {
+    db.connect((err, client, done) => {
       if (err) {
         callback(err);
       } else {
-        const newAnswerId = response.rows[0].a_id;
-        let addPhotoQuery = '';
-        if (answerObj.photos) {
-          answerObj.photos.forEach((photo) => {
-            const photoQuery = `INSERT INTO photos (
-              answer_id,
-              photo_url
-              ) VALUES (
-                ${newAnswerId},
-                '${photo}'
-              );`;
-            addPhotoQuery += photoQuery;
-          });
+        client.query(query, (err2, response) => {
+          done();
+          if (err2) {
+            callback(err2);
+          } else {
+            const newAnswerId = response.rows[0].a_id;
+            let addPhotoQuery = '';
+            if (answerObj.photos) {
+              answerObj.photos.forEach((photo) => {
+                const photoQuery = `INSERT INTO photos (
+                    answer_id,
+                    photo_url
+                    ) VALUES (
+                      ${newAnswerId},
+                      '${photo}'
+                    );`;
+                addPhotoQuery += photoQuery;
+              });
 
-          runQuery(addPhotoQuery, callback);
-        } else {
-          callback(null, response);
-        }
+              runQuery(addPhotoQuery, callback);
+            } else {
+              callback(null, response);
+            }
+          }
+        });
       }
     });
   },

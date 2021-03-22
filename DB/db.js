@@ -6,7 +6,7 @@ const db = new Pool({
   database: 'postgres',
   password: 'postgres',
   port: 5432,
-  max: 50,
+  max: 100,
   idleTImeoutMillis: 30000,
   connectionTImeoutMillis: 4000,
 });
