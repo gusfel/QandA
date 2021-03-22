@@ -78,6 +78,7 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
 });
 
 router.post('/qa/questions', (req, res) => {
+
   const newQuestion = req.body;
   const now = new Date();
   newQuestion.question_date = now.toISOString();
@@ -85,6 +86,7 @@ router.post('/qa/questions', (req, res) => {
     if (err) {
       console.log(err);
     } else {
+      console.log('question added')
       res.status(201).send('CREATED');
     }
   });
@@ -107,6 +109,7 @@ router.post('/qa/questions/:question_id/answers', (req, res) => {
 
 router.put('/qa/questions/:question_id/helpful', (req, res) => {
   const { question_id } = req.params;
+  console.log(req);
   controller.helpfulQuest(question_id, (err, data) => {
     if (err) {
       console.log(err);

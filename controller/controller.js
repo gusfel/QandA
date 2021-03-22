@@ -139,7 +139,7 @@ module.exports = {
       } else {
         const newAnswerId = response.rows[0].a_id;
         let addPhotoQuery = '';
-        if (answerObj.photos.length) {
+        if (answerObj.photos) {
           answerObj.photos.forEach((photo) => {
             const photoQuery = `INSERT INTO photos (
               answer_id,
