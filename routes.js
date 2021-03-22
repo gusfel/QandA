@@ -48,7 +48,7 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
   }
   controller.getAnswers(question_id, count, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       const answersObj = {};
       const { answers, photos } = data;
@@ -84,9 +84,8 @@ router.post('/qa/questions', (req, res) => {
   newQuestion.question_date = now.toISOString();
   controller.addQuestion(newQuestion, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
-      console.log('question added')
       res.status(201).send('CREATED');
     }
   });
@@ -100,7 +99,7 @@ router.post('/qa/questions/:question_id/answers', (req, res) => {
   body.date = now.toISOString();
   controller.addAnswer(body, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(201).send('CREATED');
     }
@@ -109,10 +108,9 @@ router.post('/qa/questions/:question_id/answers', (req, res) => {
 
 router.put('/qa/questions/:question_id/helpful', (req, res) => {
   const { question_id } = req.params;
-  console.log(req);
   controller.helpfulQuest(question_id, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(204).send('NO CONTENT');
     }
@@ -123,7 +121,7 @@ router.put('/qa/questions/:question_id/report', (req, res) => {
   const { question_id } = req.params;
   controller.reportQuest(question_id, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(204).send('NO CONTENT');
     }
@@ -134,7 +132,7 @@ router.put('/qa/answers/:answer_id/helpful', (req, res) => {
   const { answer_id } = req.params;
   controller.helpfulAns(answer_id, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(204).send('NO CONTENT');
     }
@@ -145,7 +143,7 @@ router.put('/qa/answers/:answer_id/report', (req, res) => {
   const { answer_id } = req.params;
   controller.reportAns(answer_id, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(204).send('NO CONTENT');
     }

@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
-const client = require('../DB/db.js');
+const db = require('../DB/db.js');
 const model = require('../models/models.js');
 
 const runQuery = (query, callback) => {
   client.query(query, (err, response) => {
     if (err) {
-      console.log(err);
+      callback(err);
     } else {
       callback(null, response);
     }
@@ -22,27 +22,34 @@ module.exports = {
       FROM answers
       WHERE q_id = ${question_id} AND answer_reported IS false
       LIMIT ${count}`;
-    client.query(query, (aErr, aData) => {
-      if (aErr) {
-        console.log(aErr);
+    db.connect((err, client, done) => {
+      if (err) {
+        callback(err);
       } else {
-        const answers = aData.rows;
-        const answerIds = answers.map((answer) => answer.a_id);
-        const pQuery = `SELECT
-        answer_id,
-        photo_url
-          FROM photos
-          WHERE answer_id = ANY(Array[${answerIds}])`;
-        client.query(pQuery, (pErr, pData) => {
-          if (pErr) {
-            console.log(pErr);
+        client.query(query, (aErr, aData) => {
+          if (aErr) {
+            callback(aErr);
           } else {
-            const photos = pData.rows;
-            const sendObj = {
-              photos,
-              answers,
-            };
-            callback(null, sendObj);
+            const answers = aData.rows;
+            const answerIds = answers.map((answer) => answer.a_id);
+            const pQuery = `SELECT
+            answer_id,
+            photo_url
+              FROM photos
+              WHERE answer_id = ANY(Array[${answerIds}])`;
+            client.query(pQuery, (pErr, pData) => {
+              done();
+              if (pErr) {
+                callback(pErr);
+              } else {
+                const photos = pData.rows;
+                const sendObj = {
+                  photos,
+                  answers,
+                };
+                callback(null, sendObj);
+              }
+            });
           }
         });
       }
@@ -58,43 +65,50 @@ module.exports = {
     question_helpfulness
       FROM questions
       WHERE product_id = ${product_id} AND reported IS false`;
-    client.query(query, (err, qData) => {
+    db.connect((err, client, done) => {
       if (err) {
-        console.log(err);
+        callback(err);
       } else {
-        const questions = qData.rows;
-        const questionIds = questions.map((question) => question.question_id);
-        const aQuery = `SELECT
-          a_id,
-          q_id,
-          body,
-          date,
-          answerer_name,
-          helpfulness
-            FROM answers
-            WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
-        client.query(aQuery, (aErr, aData) => {
-          if (aErr) {
-            console.log(aErr);
+        client.query(query, (qErr, qData) => {
+          if (qErr) {
+            callback(qErr);
           } else {
-            const answers = aData.rows;
-            const answerIds = answers.map((answer) => answer.a_id);
-            const pQuery = `SELECT
-              answer_id,
-              photo_url
-                FROM photos
-                WHERE answer_id = ANY(Array[${answerIds}])`;
-            client.query(pQuery, (pErr, pData) => {
-              if (pErr) {
-                console.log(pErr);
+            const questions = qData.rows;
+            const questionIds = questions.map((question) => question.question_id);
+            const aQuery = `SELECT
+              a_id,
+              q_id,
+              body,
+              date,
+              answerer_name,
+              helpfulness
+                FROM answers
+                WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
+            client.query(aQuery, (aErr, aData) => {
+              if (aErr) {
+                callback(aErr);
               } else {
-                const photos = pData.rows;
-                const sendObj = {
-                  photos,
-                  questions,
-                  answers,
-                };
-                callback(null, sendObj);
+                const answers = aData.rows;
+                const answerIds = answers.map((answer) => answer.a_id);
+                const pQuery = `SELECT
+                      answer_id,
+                      photo_url
+                        FROM photos
+                        WHERE answer_id = ANY(Array[${answerIds}])`;
+                client.query(pQuery, (pErr, pData) => {
+                  done();
+                  if (pErr) {
+                    callback(pErr);
+                  } else {
+                    const photos = pData.rows;
+                    const sendObj = {
+                      photos,
+                      questions,
+                      answers,
+                    };
+                    callback(null, sendObj);
+                  }
+                });
               }
             });
           }
@@ -135,7 +149,7 @@ module.exports = {
       RETURNING a_id;`;
     client.query(query, (err, response) => {
       if (err) {
-        console.log(err);
+        callback(err);
       } else {
         const newAnswerId = response.rows[0].a_id;
         let addPhotoQuery = '';
