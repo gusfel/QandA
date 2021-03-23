@@ -20,22 +20,18 @@ router.get('/qa/questions', (req, res) => {
         const newQuestion = question;
 
         answers.forEach((answer) => {
-          const answerObj = answer;
-
-          photos.forEach((photo) => {
-            if (photo.answer_id === answer.id) {
-              answerObj.photos.push(photo.photo_url);
-            }
-          });
-
-          if (answer.q_id === question.question_id) {
+          if (question.question_id === answer.q_id) {
+            const answerObj = answer;
+            photos.forEach((photo) => {
+              if (photo.answer_id === answer.id) {
+                answerObj.photos.push(photo.photo_url);
+              }
+            });
             newQuestion.answers[answer.id] = answerObj;
           }
         });
-
         compiled.results.push(newQuestion);
       });
-
       res.send(compiled);
     }
   });
