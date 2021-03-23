@@ -5,7 +5,9 @@
   "main": "mongodb.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js -w"
+    "start": "nodemon server.js -w",
+    "forever": "forever start server.js",
+    "stop": "forever stop server.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +22,7 @@
   "dependencies": {
     "bluebird": "^3.7.2",
     "express": "^4.17.1",
+    "forever": "^3.0.4",
     "mongoose": "^5.12.0",
     "newrelic": "^7.1.3",
     "nodemon": "^2.0.7",
