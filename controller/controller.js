@@ -73,23 +73,6 @@ module.exports = {
     question_helpfulness
       FROM questions
       WHERE product_id = ${product_id} AND reported IS false`;
-    // const query = `SELECT
-    //   json_build_object(
-    //     'questions', json_agg(
-    //       json_build_object(
-    //         question_id,
-    //         question_body,
-    //         question_date,
-    //         asker_name,
-    //         reported,
-    //         question_helpfulness
-    //       )
-    //     ),
-    //     'question_ids', json_agg(question_id)
-    //   )
-
-    //   FROM questions
-    //   WHERE product_id = ${product_id} AND reported IS false`;
     db.connect((err, client, done) => {
       if (err) {
         callback(err);
@@ -99,10 +82,9 @@ module.exports = {
             callback(qErr);
           } else {
             const questions = qData.rows;
-            console.log(questions)
             const questionIds = questions.map((question) => question.question_id);
             const aQuery = `SELECT
-              a_id,
+              a_id as id,
               q_id,
               body,
               date,
@@ -115,7 +97,7 @@ module.exports = {
                 callback(aErr);
               } else {
                 const answers = aData.rows;
-                const answerIds = answers.map((answer) => answer.a_id);
+                const answerIds = answers.map((answer) => answer.id);
                 const pQuery = `SELECT
                       answer_id,
                       photo_url

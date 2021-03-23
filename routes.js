@@ -22,11 +22,12 @@ router.get('/qa/questions', (req, res) => {
         const answerObj = answer;
         answerObj.photos = [];
         photos.forEach((photo) => {
-          if (photo.answer_id === answer.a_id) {
+          if (photo.answer_id === answer.id) {
             answerObj.photos.push(photo.photo_url);
           }
         });
-        compiled[answer.q_id].answers[answer.a_id] = answerObj;
+        compiled[answer.q_id].answers[answer.id] = answerObj;
+        delete answerObj.q_id;
       });
       const response = {
         product_id,
@@ -55,13 +56,12 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
       answers.forEach((answer) => {
         const answerObj = answer;
         answerObj.photos = [];
-
         photos.forEach((photo) => {
-          if (photo.answer_id === answer.a_id) {
+          if (photo.answer_id === answer.answer_id) {
             answerObj.photos.push(photo.photo_url);
           }
         });
-        answersObj[answer.a_id] = answerObj;
+        answersObj[answer.answer_id] = answerObj;
       });
       const response = {
         question: question_id,
