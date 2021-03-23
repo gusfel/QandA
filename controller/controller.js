@@ -64,20 +64,20 @@ module.exports = {
 
   getQuestions: (product_id, callback) => {
     const query = `SELECT json_build_object(
-    'questions', json_agg(
-      json_build_object(
+      'questions', json_agg(
+        json_build_object(
         'question_id', question_id,
-   'question_body', question_body,
-   'question_date', question_date,
-   'asker_name', asker_name,
-   'reported', reported,
-   'question_helpfulness', question_helpfulness,
-   'answers', json_build_object()
-      )
-    ),
-    'question_ids', json_agg(question_id)
-  ) FROM questions
-  WHERE product_id = ${product_id} AND reported IS false`;
+        'question_body', question_body,
+        'question_date', question_date,
+        'asker_name', asker_name,
+        'reported', reported,
+        'question_helpfulness', question_helpfulness,
+        'answers', json_build_object()
+        )
+      ),
+      'question_ids', json_agg(question_id)
+      ) FROM questions
+      WHERE product_id = ${product_id} AND reported IS false`;
     db.connect((err, client, done) => {
       if (err) {
         callback(err);
@@ -85,36 +85,40 @@ module.exports = {
         client.query(query, (e2, data) => {
           const result = data.rows[0].json_build_object.questions;
           if (e2 || result === null) {
-            callback(e2);
+            callback('error');
           } else {
             const { questions } = data.rows[0].json_build_object;
             const { question_ids } = data.rows[0].json_build_object;
             const aQuery = `SELECT json_build_object(
-            'answers', json_agg(
-              json_build_object(
-              'id', a_id,
-             'q_id',q_id,
-             'body', body,
-             'date', date,
-             'answerer_name',answerer_name,
-             'helpfulness',helpfulness,
-             'photos', coalesce(null::jsonb, '[]'::jsonb)
-              )
-            ),
-            'answer_ids', json_agg(a_id)
-          ) FROM answers
-            WHERE q_id = ANY(Array[${question_ids}]) AND answer_reported IS false`;
+              'answers', json_agg(
+                json_build_object(
+                'id', a_id,
+                'q_id',q_id,
+                'body', body,
+                'date', date,
+                'answerer_name',answerer_name,
+                'helpfulness',helpfulness,
+                'photos', coalesce(null::jsonb, '[]'::jsonb)
+                )
+              ),
+              'answer_ids', json_agg(a_id)
+              ) FROM answers
+              WHERE q_id = ANY(Array[${question_ids}]) AND answer_reported IS false`;
             client.query(aQuery, (aerr, adata) => {
               if (err) {
                 callback(aerr);
               } else {
-                const { answers } = adata.rows[0].json_build_object;
-                const { answer_ids } = adata.rows[0].json_build_object;
+                let answers = [];
+                let answer_ids = [];
+                if (adata.rows[0].json_build_object) {
+                  answers = adata.rows[0].json_build_object.answers;
+                  answer_ids = adata.rows[0].json_build_object.answer_ids;
+                }
                 const pQuery = `SELECT
-                answer_id,
-                photo_url
-              FROM photos
-              WHERE answer_id = ANY(Array[${answer_ids}])`;
+                    answer_id,
+                    photo_url
+                  FROM photos
+                  WHERE answer_id = ANY(Array[${answer_ids}])`;
                 client.query(pQuery, (pErr, pData) => {
                   done();
                   if (pErr) {

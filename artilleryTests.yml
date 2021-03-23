@@ -5,13 +5,14 @@ config:
   phases:
     - duration: 20
       arrivalRate: 100
+      rampTo: 500
       name: 'Warm up'
     - duration: 40
-      arrivalRate: 100
-      rampTo: 500
+      arrivalRate: 500
+      rampTo: 1000
       name: 'Ramp up'
     - duration: 60
-      arrivalRate: 500
+      arrivalRate: 1000
       name: 'Cruise'
     - duration: 30
       arrivalRate: 600
