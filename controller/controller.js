@@ -1,13 +1,20 @@
 /* eslint-disable camelcase */
-const client = require('../DB/db.js');
+const db = require('../DB/db.js');
 const model = require('../models/models.js');
 
 const runQuery = (query, callback) => {
-  client.query(query, (err, response) => {
+  db.connect((err, client, done) => {
     if (err) {
-      console.log(err);
+      callback(err);
     } else {
-      callback(null, response);
+      client.query(query, (err2, response) => {
+        done();
+        if (err2) {
+          callback(err2);
+        } else {
+          callback(null, response);
+        }
+      });
     }
   });
 };
@@ -15,39 +22,47 @@ const runQuery = (query, callback) => {
 module.exports = {
   getAnswers: (question_id, count, callback) => {
     const query = `SELECT
-      a_id,
+      a_id AS answer_id,
       body,
       answerer_name,
       helpfulness
       FROM answers
       WHERE q_id = ${question_id} AND answer_reported IS false
       LIMIT ${count}`;
-    client.query(query, (aErr, aData) => {
-      if (aErr) {
-        console.log(aErr);
+    db.connect((err, client, done) => {
+      if (err) {
+        callback(err);
       } else {
-        const answers = aData.rows;
-        const answerIds = answers.map((answer) => answer.a_id);
-        const pQuery = `SELECT
-        answer_id,
-        photo_url
-          FROM photos
-          WHERE answer_id = ANY(Array[${answerIds}])`;
-        client.query(pQuery, (pErr, pData) => {
-          if (pErr) {
-            console.log(pErr);
+        client.query(query, (aErr, aData) => {
+          if (aErr) {
+            callback(aErr);
           } else {
-            const photos = pData.rows;
-            const sendObj = {
-              photos,
-              answers,
-            };
-            callback(null, sendObj);
+            const answers = aData.rows;
+            const answerIds = answers.map((answer) => answer.answer_id);
+            const pQuery = `SELECT
+            answer_id,
+            photo_url
+              FROM photos
+              WHERE answer_id = ANY(Array[${answerIds}])`;
+            client.query(pQuery, (pErr, pData) => {
+              done();
+              if (pErr) {
+                callback(pErr);
+              } else {
+                const photos = pData.rows;
+                const sendObj = {
+                  photos,
+                  answers,
+                };
+                callback(null, sendObj);
+              }
+            });
           }
         });
       }
     });
   },
+
   getQuestions: (product_id, callback) => {
     const query = `SELECT
     question_id,
@@ -58,43 +73,50 @@ module.exports = {
     question_helpfulness
       FROM questions
       WHERE product_id = ${product_id} AND reported IS false`;
-    client.query(query, (err, qData) => {
+    db.connect((err, client, done) => {
       if (err) {
-        console.log(err);
+        callback(err);
       } else {
-        const questions = qData.rows;
-        const questionIds = questions.map((question) => question.question_id);
-        const aQuery = `SELECT
-          a_id,
-          q_id,
-          body,
-          date,
-          answerer_name,
-          helpfulness
-            FROM answers
-            WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
-        client.query(aQuery, (aErr, aData) => {
-          if (aErr) {
-            console.log(aErr);
+        client.query(query, (qErr, qData) => {
+          if (qErr) {
+            callback(qErr);
           } else {
-            const answers = aData.rows;
-            const answerIds = answers.map((answer) => answer.a_id);
-            const pQuery = `SELECT
-              answer_id,
-              photo_url
-                FROM photos
-                WHERE answer_id = ANY(Array[${answerIds}])`;
-            client.query(pQuery, (pErr, pData) => {
-              if (pErr) {
-                console.log(pErr);
+            const questions = qData.rows;
+            const questionIds = questions.map((question) => question.question_id);
+            const aQuery = `SELECT
+              a_id as id,
+              q_id,
+              body,
+              date,
+              answerer_name,
+              helpfulness
+                FROM answers
+                WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
+            client.query(aQuery, (aErr, aData) => {
+              if (aErr) {
+                callback(aErr);
               } else {
-                const photos = pData.rows;
-                const sendObj = {
-                  photos,
-                  questions,
-                  answers,
-                };
-                callback(null, sendObj);
+                const answers = aData.rows;
+                const answerIds = answers.map((answer) => answer.id);
+                const pQuery = `SELECT
+                      answer_id,
+                      photo_url
+                        FROM photos
+                        WHERE answer_id = ANY(Array[${answerIds}])`;
+                client.query(pQuery, (pErr, pData) => {
+                  done();
+                  if (pErr) {
+                    callback(pErr);
+                  } else {
+                    const photos = pData.rows;
+                    const sendObj = {
+                      photos,
+                      questions,
+                      answers,
+                    };
+                    callback(null, sendObj);
+                  }
+                });
               }
             });
           }
@@ -133,28 +155,35 @@ module.exports = {
         '${answerObj.email}'
       )
       RETURNING a_id;`;
-    client.query(query, (err, response) => {
+    db.connect((err, client, done) => {
       if (err) {
-        console.log(err);
+        callback(err);
       } else {
-        const newAnswerId = response.rows[0].a_id;
-        let addPhotoQuery = '';
-        if (answerObj.photos) {
-          answerObj.photos.forEach((photo) => {
-            const photoQuery = `INSERT INTO photos (
-              answer_id,
-              photo_url
-              ) VALUES (
-                ${newAnswerId},
-                '${photo}'
-              );`;
-            addPhotoQuery += photoQuery;
-          });
+        client.query(query, (err2, response) => {
+          done();
+          if (err2) {
+            callback(err2);
+          } else {
+            const newAnswerId = response.rows[0].a_id;
+            let addPhotoQuery = '';
+            if (answerObj.photos) {
+              answerObj.photos.forEach((photo) => {
+                const photoQuery = `INSERT INTO photos (
+                    answer_id,
+                    photo_url
+                    ) VALUES (
+                      ${newAnswerId},
+                      '${photo}'
+                    );`;
+                addPhotoQuery += photoQuery;
+              });
 
-          runQuery(addPhotoQuery, callback);
-        } else {
-          callback(null, response);
-        }
+              runQuery(addPhotoQuery, callback);
+            } else {
+              callback(null, response);
+            }
+          }
+        });
       }
     });
   },
@@ -183,3 +212,119 @@ module.exports = {
     runQuery(query, callback);
   },
 };
+// json_build
+// getQuestions: (product_id, callback) => {
+//   const query = `SELECT json_build_object(
+//     'product_id', ${product_id},
+//     'results', json_agg(
+//       json_build_object(
+//         'question_id', question_id,
+//    'question_body', question_body,
+//    'question_date', question_date,
+//    'asker_name', asker_name,
+//    'reported', reported,
+//    'question_helpfulness', question_helpfulness,
+//    'answers', json_build_object()
+//       )
+//     ),
+//     'question_ids', json_agg(question_id)
+//   ) FROM questions
+//   WHERE product_id = ${product_id} AND reported IS false`;
+//   db.connect((err, client, done) => {
+//     if (err) {
+//       callback(err);
+//     } else {
+//       client.query(query, (e2, data) => {
+//         if (e2) {
+//           callback(e2);
+//         } else {
+//           const questions = data.rows[0].json_build_object;
+//           const { question_ids } = questions;
+//           delete questions.question_ids;
+//           const aQuery = `SELECT json_build_object(
+//             'answers', json_agg(
+//               json_build_object(
+//               'id', a_id,
+//              'q_id',q_id,
+//              'body', body,
+//              'date', date,
+//              'answerer_name',answerer_name,
+//              'helpfulness',helpfulness,
+//              'photos', coalesce(null::jsonb, '[]'::jsonb)
+//               )
+//             ),
+//             'answer_ids', json_agg(a_id)
+//           ) FROM answers
+//             WHERE q_id = ANY(Array[${question_ids}]) AND answer_reported IS false`;
+//           client.query(aQuery, (aerr, adata) => {
+//             done();
+//             if (err) {
+//               callback(aerr);
+//             } else {
+//               const answers = adata.rows[0].json_build_object;
+//               const { answer_ids } = answers;
+//               delete answers.answer_ids;
+//               console.log(answers)
+//               const pQuery = `SELECT json_build_object(
+
+//                 'answer_id', answer_id,
+//                 'photo_id', photo_id
+//               ) answer_id
+//               FROM photos
+//               WHERE answer_id = ANY(Array[${answer_ids}])`;
+//               client.query(pQuery, (pErr, pData) => {
+//                 if (pErr) {
+//                   callback(pErr);
+//                 } else {
+//                   console.log(pData.rows);
+//                 }
+//               })
+//             }
+//           });
+//         }
+//       });
+//     }
+//   });
+// },
+
+// 3 joins
+// getQuestions: (product_id, callback) => {
+//   // const query = `SELECT
+//   // q.*
+//   // FROM questions q
+//   // WHERE q.product_id = ${product_id}`;
+//   const query = `SELECT
+//   q.question_id,
+//   q.question_body,
+//   q.question_date,
+//   q.asker_name,
+//   q.reported,
+//   q.question_helpfulness,
+//   a.a_id,
+//   a.q_id,
+//   a.body,
+//   a.date,
+//   a.answerer_name,
+//   a.helpfulness,
+//   p.*
+//   FROM questions q
+//   LEFT JOIN answers a on a.q_id = q.question_id
+//   LEFT JOIN photos p on p.answer_id = a.a_id
+//   WHERE q.product_id = ${product_id} AND q.reported IS false AND a.answer_reported IS false
+//   `;
+//   db.connect((err, client, done) => {
+//     if (err) {
+//       callback(err);
+//     } else {
+//       client.query(query, (terr, data) => {
+//         done();
+//         if (terr) {
+//           callback(terr);
+//         } else {
+//           console.log(data.rows)
+//           callback(null, data.rows);
+//         }
+//       });
+//     }
+//   });
+// },

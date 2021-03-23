@@ -22,11 +22,12 @@ router.get('/qa/questions', (req, res) => {
         const answerObj = answer;
         answerObj.photos = [];
         photos.forEach((photo) => {
-          if (photo.answer_id === answer.a_id) {
+          if (photo.answer_id === answer.id) {
             answerObj.photos.push(photo.photo_url);
           }
         });
-        compiled[answer.q_id].answers[answer.a_id] = answerObj;
+        compiled[answer.q_id].answers[answer.id] = answerObj;
+        delete answerObj.q_id;
       });
       const response = {
         product_id,
@@ -48,20 +49,19 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
   }
   controller.getAnswers(question_id, count, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       const answersObj = {};
       const { answers, photos } = data;
       answers.forEach((answer) => {
         const answerObj = answer;
         answerObj.photos = [];
-
         photos.forEach((photo) => {
-          if (photo.answer_id === answer.a_id) {
+          if (photo.answer_id === answer.answer_id) {
             answerObj.photos.push(photo.photo_url);
           }
         });
-        answersObj[answer.a_id] = answerObj;
+        answersObj[answer.answer_id] = answerObj;
       });
       const response = {
         question: question_id,
@@ -78,15 +78,13 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
 });
 
 router.post('/qa/questions', (req, res) => {
-
   const newQuestion = req.body;
   const now = new Date();
   newQuestion.question_date = now.toISOString();
   controller.addQuestion(newQuestion, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
-      console.log('question added')
       res.status(201).send('CREATED');
     }
   });
@@ -100,7 +98,7 @@ router.post('/qa/questions/:question_id/answers', (req, res) => {
   body.date = now.toISOString();
   controller.addAnswer(body, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(201).send('CREATED');
     }
@@ -109,10 +107,9 @@ router.post('/qa/questions/:question_id/answers', (req, res) => {
 
 router.put('/qa/questions/:question_id/helpful', (req, res) => {
   const { question_id } = req.params;
-  console.log(req);
   controller.helpfulQuest(question_id, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(204).send('NO CONTENT');
     }
@@ -123,7 +120,7 @@ router.put('/qa/questions/:question_id/report', (req, res) => {
   const { question_id } = req.params;
   controller.reportQuest(question_id, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(204).send('NO CONTENT');
     }
@@ -134,7 +131,7 @@ router.put('/qa/answers/:answer_id/helpful', (req, res) => {
   const { answer_id } = req.params;
   controller.helpfulAns(answer_id, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(204).send('NO CONTENT');
     }
@@ -145,7 +142,7 @@ router.put('/qa/answers/:answer_id/report', (req, res) => {
   const { answer_id } = req.params;
   controller.reportAns(answer_id, (err, data) => {
     if (err) {
-      console.log(err);
+      res.status(404);
     } else {
       res.status(204).send('NO CONTENT');
     }
