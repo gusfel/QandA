@@ -83,7 +83,8 @@ module.exports = {
         callback(err);
       } else {
         client.query(query, (e2, data) => {
-          if (e2) {
+          const result = data.rows[0].json_build_object.questions;
+          if (e2 || result === null) {
             callback(e2);
           } else {
             const { questions } = data.rows[0].json_build_object;
@@ -111,7 +112,7 @@ module.exports = {
                 const { answer_ids } = adata.rows[0].json_build_object;
                 const pQuery = `SELECT
                 answer_id,
-                photo_id
+                photo_url
               FROM photos
               WHERE answer_id = ANY(Array[${answer_ids}])`;
                 client.query(pQuery, (pErr, pData) => {

@@ -8,8 +8,8 @@ router.get('/qa/questions', (req, res) => {
   const { product_id } = req.query;
   controller.getQuestions(product_id, (err, data) => {
     if (err) {
-      res.status(404);
-    } else {
+      res.status(404).send('no questions');
+    } else if (data) {
       // with json_build_object
       const compiled = {
         product_id,
