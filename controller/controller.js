@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 const db = require('../DB/db.js');
-const model = require('../models/models.js');
 
 const runQuery = (query, callback) => {
   db.connect((err, client, done) => {
@@ -64,57 +63,69 @@ module.exports = {
   },
 
   getQuestions: (product_id, callback) => {
-    const query = `SELECT
-    question_id,
-    question_body,
-    question_date,
-    asker_name,
-    reported,
-    question_helpfulness
-      FROM questions
-      WHERE product_id = ${product_id} AND reported IS false`;
+    const query = `SELECT json_build_object(
+    'questions', json_agg(
+      json_build_object(
+        'question_id', question_id,
+   'question_body', question_body,
+   'question_date', question_date,
+   'asker_name', asker_name,
+   'reported', reported,
+   'question_helpfulness', question_helpfulness,
+   'answers', json_build_object()
+      )
+    ),
+    'question_ids', json_agg(question_id)
+  ) FROM questions
+  WHERE product_id = ${product_id} AND reported IS false`;
     db.connect((err, client, done) => {
       if (err) {
         callback(err);
       } else {
-        client.query(query, (qErr, qData) => {
-          if (qErr) {
-            callback(qErr);
+        client.query(query, (e2, data) => {
+          if (e2) {
+            callback(e2);
           } else {
-            const questions = qData.rows;
-            const questionIds = questions.map((question) => question.question_id);
-            const aQuery = `SELECT
-              a_id as id,
-              q_id,
-              body,
-              date,
-              answerer_name,
-              helpfulness
-                FROM answers
-                WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
-            client.query(aQuery, (aErr, aData) => {
-              if (aErr) {
-                callback(aErr);
+            const { questions } = data.rows[0].json_build_object;
+            const { question_ids } = data.rows[0].json_build_object;
+            const aQuery = `SELECT json_build_object(
+            'answers', json_agg(
+              json_build_object(
+              'id', a_id,
+             'q_id',q_id,
+             'body', body,
+             'date', date,
+             'answerer_name',answerer_name,
+             'helpfulness',helpfulness,
+             'photos', coalesce(null::jsonb, '[]'::jsonb)
+              )
+            ),
+            'answer_ids', json_agg(a_id)
+          ) FROM answers
+            WHERE q_id = ANY(Array[${question_ids}]) AND answer_reported IS false`;
+            client.query(aQuery, (aerr, adata) => {
+              if (err) {
+                callback(aerr);
               } else {
-                const answers = aData.rows;
-                const answerIds = answers.map((answer) => answer.id);
+                const { answers } = adata.rows[0].json_build_object;
+                const { answer_ids } = adata.rows[0].json_build_object;
                 const pQuery = `SELECT
-                      answer_id,
-                      photo_url
-                        FROM photos
-                        WHERE answer_id = ANY(Array[${answerIds}])`;
+                answer_id,
+                photo_id
+              FROM photos
+              WHERE answer_id = ANY(Array[${answer_ids}])`;
                 client.query(pQuery, (pErr, pData) => {
                   done();
                   if (pErr) {
                     callback(pErr);
                   } else {
                     const photos = pData.rows;
-                    const sendObj = {
-                      photos,
+                    const allData = {
                       questions,
                       answers,
+                      photos,
                     };
-                    callback(null, sendObj);
+                    callback(null, allData);
                   }
                 });
               }
@@ -124,6 +135,7 @@ module.exports = {
       }
     });
   },
+
   addQuestion: (questionObj, callback) => {
     const query = `INSERT INTO questions(
       question_body,
@@ -323,6 +335,70 @@ module.exports = {
 //         } else {
 //           console.log(data.rows)
 //           callback(null, data.rows);
+//         }
+//       });
+//     }
+//   });
+// },
+
+// 3 queries 1.0
+
+// getQuestions: (product_id, callback) => {
+//   const query = `SELECT
+//   question_id,
+//   question_body,
+//   question_date,
+//   asker_name,
+//   reported,
+//   question_helpfulness
+//     FROM questions
+//     WHERE product_id = ${product_id} AND reported IS false`;
+//   db.connect((err, client, done) => {
+//     if (err) {
+//       callback(err);
+//     } else {
+//       client.query(query, (qErr, qData) => {
+//         if (qErr) {
+//           callback(qErr);
+//         } else {
+//           const questions = qData.rows;
+//           const questionIds = questions.map((question) => question.question_id);
+//           const aQuery = `SELECT
+//             a_id as id,
+//             q_id,
+//             body,
+//             date,
+//             answerer_name,
+//             helpfulness
+//               FROM answers
+//               WHERE q_id = ANY(Array[${questionIds}]) AND answer_reported IS false`;
+//           client.query(aQuery, (aErr, aData) => {
+//             if (aErr) {
+//               callback(aErr);
+//             } else {
+//               const answers = aData.rows;
+//               const answerIds = answers.map((answer) => answer.id);
+//               const pQuery = `SELECT
+//                     answer_id,
+//                     photo_url
+//                       FROM photos
+//                       WHERE answer_id = ANY(Array[${answerIds}])`;
+//               client.query(pQuery, (pErr, pData) => {
+//                 done();
+//                 if (pErr) {
+//                   callback(pErr);
+//                 } else {
+//                   const photos = pData.rows;
+//                   const sendObj = {
+//                     photos,
+//                     questions,
+//                     answers,
+//                   };
+//                   callback(null, sendObj);
+//                 }
+//               });
+//             }
+//           });
 //         }
 //       });
 //     }
