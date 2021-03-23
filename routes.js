@@ -18,7 +18,6 @@ router.get('/qa/questions', (req, res) => {
       const { questions, answers, photos } = data;
       questions.forEach((question) => {
         const newQuestion = question;
-
         answers.forEach((answer) => {
           if (question.question_id === answer.q_id) {
             const answerObj = answer;
@@ -128,7 +127,7 @@ router.put('/qa/answers/:answer_id/helpful', (req, res) => {
   controller.helpfulAns(answer_id, (err, data) => {
     if (err) {
       res.status(404);
-    } else {
+    } else if (data) {
       res.status(204).send('NO CONTENT');
     }
   });
