@@ -10,33 +10,33 @@ router.get('/qa/questions', (req, res) => {
     if (err) {
       res.status(404);
     } else {
-      // with 3 queries
-      const compiled = {};
-      const { questions, answers, photos } = data;
-      questions.forEach((question) => {
-        const formattedQ = question;
-        formattedQ.answers = {};
-        compiled[question.question_id] = formattedQ;
-      });
-      answers.forEach((answer) => {
-        const answerObj = answer;
-        answerObj.photos = [];
-        photos.forEach((photo) => {
-          if (photo.answer_id === answer.id) {
-            answerObj.photos.push(photo.photo_url);
-          }
-        });
-        compiled[answer.q_id].answers[answer.id] = answerObj;
-        delete answerObj.q_id;
-      });
-      const response = {
+      // with json_build_object
+      const compiled = {
         product_id,
         results: [],
       };
-      Object.keys(compiled).forEach((key) => {
-        response.results.push(compiled[key]);
+      const { questions, answers, photos } = data;
+      questions.forEach((question) => {
+        const newQuestion = question;
+
+        answers.forEach((answer) => {
+          const answerObj = answer;
+
+          photos.forEach((photo) => {
+            if (photo.answer_id === answer.id) {
+              answerObj.photos.push(photo.photo_url);
+            }
+          });
+
+          if (answer.q_id === question.question_id) {
+            newQuestion.answers[answer.id] = answerObj;
+          }
+        });
+
+        compiled.results.push(newQuestion);
       });
-      res.status(200).send(response);
+
+      res.send(compiled);
     }
   });
 });
@@ -192,3 +192,31 @@ module.exports = router;
 //   response.results.push(questions[key]);
 // });
 // res.send(response);
+
+// with 3 queries
+// const compiled = {};
+// const { questions, answers, photos } = data;
+// questions.forEach((question) => {
+//   const formattedQ = question;
+//   formattedQ.answers = {};
+//   compiled[question.question_id] = formattedQ;
+// });
+// answers.forEach((answer) => {
+//   const answerObj = answer;
+//   answerObj.photos = [];
+//   photos.forEach((photo) => {
+//     if (photo.answer_id === answer.id) {
+//       answerObj.photos.push(photo.photo_url);
+//     }
+//   });
+//   compiled[answer.q_id].answers[answer.id] = answerObj;
+//   delete answerObj.q_id;
+// });
+// const response = {
+//   product_id,
+//   results: [],
+// };
+// Object.keys(compiled).forEach((key) => {
+//   response.results.push(compiled[key]);
+// });
+// res.status(200).send(response);
