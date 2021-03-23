@@ -9,7 +9,7 @@ router.get('/qa/questions', (req, res) => {
   controller.getQuestions(product_id, (err, data) => {
     if (err) {
       res.status(404).send('no questions');
-    } else if (data) {
+    } else {
       // with json_build_object
       const compiled = {
         product_id,
@@ -73,7 +73,7 @@ router.post('/qa/questions', (req, res) => {
   newQuestion.question_date = now.toISOString();
   controller.addQuestion(newQuestion, (err, data) => {
     if (err) {
-      res.status(404);
+      res.status(404).send('NOT CREATED');
     } else {
       res.status(201).send('CREATED');
     }
@@ -88,7 +88,7 @@ router.post('/qa/questions/:question_id/answers', (req, res) => {
   body.date = now.toISOString();
   controller.addAnswer(body, (err, data) => {
     if (err) {
-      res.status(404);
+      res.status(404).send('NOT CREATED');
     } else {
       res.status(201).send('CREATED');
     }
