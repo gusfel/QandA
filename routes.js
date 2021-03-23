@@ -44,28 +44,23 @@ router.get('/qa/questions/:question_id/answers', (req, res) => {
   }
   controller.getAnswers(question_id, count, (err, data) => {
     if (err) {
-      res.status(404);
+      res.status(404).send('no answers');
     } else {
-      const answersObj = {};
-      const { answers, photos } = data;
-      answers.forEach((answer) => {
-        const answerObj = answer;
-        answerObj.photos = [];
-        photos.forEach((photo) => {
-          if (photo.answer_id === answer.answer_id) {
-            answerObj.photos.push(photo.photo_url);
-          }
-        });
-        answersObj[answer.answer_id] = answerObj;
-      });
       const response = {
         question: question_id,
         page: 0,
         count,
         results: [],
       };
-      Object.keys(answersObj).forEach((key) => {
-        response.results.push(answersObj[key]);
+      const { answers, photos } = data;
+      answers.forEach((answer) => {
+        const answerObj = answer;
+        photos.forEach((photo) => {
+          if (photo.answer_id === answer.answer_id) {
+            answerObj.photos.push(photo.photo_url);
+          }
+        });
+        response.results.push(answerObj);
       });
       res.status(200).send(response);
     }
@@ -215,3 +210,27 @@ module.exports = router;
 //   response.results.push(compiled[key]);
 // });
 // res.status(200).send(response);
+
+// getAnswers before refactor
+// const answersObj = {};
+//       const { answers, photos } = data;
+//       answers.forEach((answer) => {
+//         const answerObj = answer;
+//         answerObj.photos = [];
+//         photos.forEach((photo) => {
+//           if (photo.answer_id === answer.answer_id) {
+//             answerObj.photos.push(photo.photo_url);
+//           }
+//         });
+//         answersObj[answer.answer_id] = answerObj;
+//       });
+//       const response = {
+//         question: question_id,
+//         page: 0,
+//         count,
+//         results: [],
+//       };
+//       Object.keys(answersObj).forEach((key) => {
+//         response.results.push(answersObj[key]);
+//       });
+//       res.status(200).send(response);

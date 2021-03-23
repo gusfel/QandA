@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 const db = require('../DB/db.js');
+require('newrelic');
 
 const runQuery = (query, callback) => {
   db.connect((err, client, done) => {
@@ -20,12 +21,20 @@ const runQuery = (query, callback) => {
 
 module.exports = {
   getAnswers: (question_id, count, callback) => {
-    const query = `SELECT
-      a_id AS answer_id,
-      body,
-      answerer_name,
-      helpfulness
-      FROM answers
+    const query = `SELECT json_build_object(
+      'answers', json_agg(
+        json_build_object(
+        'answer_id', a_id,
+        'q_id',q_id,
+        'body', body,
+        'date', date,
+        'answerer_name',answerer_name,
+        'helpfulness',helpfulness,
+        'photos', coalesce(null::jsonb, '[]'::jsonb)
+        )
+      ),
+      'answer_ids', json_agg(a_id)
+      ) FROM answers
       WHERE q_id = ${question_id} AND answer_reported IS false
       LIMIT ${count}`;
     db.connect((err, client, done) => {
@@ -33,16 +42,17 @@ module.exports = {
         callback(err);
       } else {
         client.query(query, (aErr, aData) => {
-          if (aErr) {
-            callback(aErr);
+          const result = aData.rows[0].json_build_object.questions;
+          if (aErr || result === null) {
+            callback('aErr');
           } else {
-            const answers = aData.rows;
-            const answerIds = answers.map((answer) => answer.answer_id);
+            const { answers } = aData.rows[0].json_build_object;
+            const { answer_ids } = aData.rows[0].json_build_object;
             const pQuery = `SELECT
             answer_id,
             photo_url
               FROM photos
-              WHERE answer_id = ANY(Array[${answerIds}])`;
+              WHERE answer_id = ANY(Array[${answer_ids}])`;
             client.query(pQuery, (pErr, pData) => {
               done();
               if (pErr) {
@@ -53,6 +63,7 @@ module.exports = {
                   photos,
                   answers,
                 };
+                // console.log(answers);
                 callback(null, sendObj);
               }
             });
@@ -108,12 +119,8 @@ module.exports = {
               if (err) {
                 callback(aerr);
               } else {
-                let answers = [];
-                let answer_ids = [];
-                if (adata.rows[0].json_build_object) {
-                  answers = adata.rows[0].json_build_object.answers;
-                  answer_ids = adata.rows[0].json_build_object.answer_ids;
-                }
+                const { answers } = adata.rows[0].json_build_object;
+                const { answer_ids } = adata.rows[0].json_build_object;
                 const pQuery = `SELECT
                     answer_id,
                     photo_url
