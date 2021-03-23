@@ -5,17 +5,17 @@ config:
   phases:
     - duration: 20
       arrivalRate: 100
-      rampTo: 500
+      rampTo: 300
       name: 'Warm up'
     - duration: 40
-      arrivalRate: 500
-      rampTo: 1000
+      arrivalRate: 300
+      rampTo: 400
       name: 'Ramp up'
     - duration: 60
-      arrivalRate: 1000
+      arrivalRate: 400
       name: 'Cruise'
     - duration: 30
-      arrivalRate: 600
+      arrivalRate: 450
       name: 'Crash'
   payload:
     path: "productIds.csv"
