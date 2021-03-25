@@ -5,9 +5,9 @@ CREATE DATABASE qanda;
 
 USE qanda;
 
+\c qanda;
+
 DROP TABLE IF EXISTS questions CASCADE;
-
-
 
 CREATE TABLE questions (
   id SERIAL,
@@ -52,6 +52,6 @@ CREATE TABLE photos (
   PRIMARY KEY (id),
     FOREIGN KEY (answer_id)
       REFERENCES answers (a_id)
-        ON DELETE CASCADE,
+       ON DELETE CASCADE,
   UNIQUE (photo_id)
 );

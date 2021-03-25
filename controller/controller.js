@@ -91,6 +91,7 @@ module.exports = {
       WHERE product_id = ${product_id} AND reported IS false`;
     db.connect((err, client, done) => {
       if (err) {
+        console.log('aws?' + err);
         callback(err);
       } else {
         client.query(query, (e2, data) => {
