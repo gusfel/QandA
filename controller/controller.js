@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 const db = require('../DB/db.js');
-require('newrelic');
 
 const runQuery = (query, callback) => {
   db.connect((err, client, done) => {

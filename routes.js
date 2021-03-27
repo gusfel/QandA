@@ -139,6 +139,10 @@ router.put('/qa/answers/:answer_id/report', (req, res) => {
   });
 });
 
+router.get('/loaderio-29c502b60720759f45d8f3fcd2c5cdc7', (req, res) => {
+  res.send('loaderio-29c502b60720759f45d8f3fcd2c5cdc7');
+});
+
 module.exports = router;
 
 // get questions with 3 queries
