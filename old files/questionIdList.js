@@ -1,13 +1,6 @@
 const fs = require('fs');
 const client = require('./DB/db.js');
 
-// const nums = [];
-
-// for (let i = 0; i < 10000; i++) {
-//   nums.push(i);
-// }
-// const numStr = nums.join('\n');
-
 const getIds = () => {
   const query = 'SELECT DISTINCT q_id FROM answers limit 10000';
   client.query(query, (err, data) => {
